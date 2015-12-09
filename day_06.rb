@@ -1,8 +1,8 @@
-lights = Hash.new {|h,k| h[k] = false }
+lights = Hash.new {|h,k| h[k] = 0 }
 
-instructions = { "turn on" => ->(_) { true },
-                 "turn off" => ->(_) { false },
-                 "toggle" => ->(light) { !light } }
+instructions = { "turn on" => ->(intensity) { intensity + 1 },
+                 "turn off" => ->(intensity) { intensity.zero? ? 0 : intensity - 1 },
+                 "toggle" => ->(intensity) { intensity + 2 } }
 
 regex = /(turn on|turn off|toggle) (\d+),(\d+) through (\d+),(\d+)/
 DATA.read.scan(regex).each do |instruction, x1,y1, x2,y2|
@@ -17,7 +17,7 @@ DATA.read.scan(regex).each do |instruction, x1,y1, x2,y2|
   end
 end
 
-puts lights.values.count {|light| light }
+puts lights.values.inject(&:+)
 
 __END__
 turn on 887,9 through 959,629
