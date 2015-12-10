@@ -5,5 +5,5 @@ class Integer
 end
 
 seed = 1113122113
-40.times { seed = seed.look_and_say }
+50.times { seed = seed.look_and_say }
 puts seed.to_s.size
