@@ -27,10 +27,14 @@ class String
 
     escaped.sub(/"$/, "")
   end
+
+  def encoded
+    "\"#{self.gsub(/(\\|")/, '\\\\\1')}\""
+  end
 end
 
 num = DATA.read.each_line.map(&:chomp).inject(0) do |n,line|
-  n + line.size - line.escaped.size
+  n + line.encoded.size - line.size
 end
 puts num
 __END__
