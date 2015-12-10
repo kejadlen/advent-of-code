@@ -37,6 +37,8 @@ DATA.read.scan(/(.+) -> (.+)/) do |input, output|
   BINDING[output] = Expr.new(op, inputs, output)
 end
 
+BINDING["b"] = Expr.new(nil, ["3176"], "b")
+
 puts BINDING["a"].reduced
 
 __END__
