@@ -6,7 +6,7 @@ DATA.read.scan(/^(.*) to (.*) = (.*)$/).each do |from, to, distance|
   distances[from][to] = distance
 end
 locations = distances.keys
-puts locations.permutation.map {|p| p.each_cons(2).map {|a,b| distances[a][b] }.inject(&:+) }.min
+puts locations.permutation.map {|p| p.each_cons(2).map {|a,b| distances[a][b] }.inject(&:+) }.max
 __END__
 Faerun to Tristram = 65
 Faerun to Tambi = 129
