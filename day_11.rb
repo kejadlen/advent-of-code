@@ -9,7 +9,7 @@ class String
   end
 end
 
-seed = "cqjxjnds"
+seed = "cqjxxyzz"
 while true
   seed = seed.succ
   break if seed.password?
