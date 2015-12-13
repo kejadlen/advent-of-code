@@ -1,10 +1,11 @@
 regex = /(\w+) would (\w+) (\d+) happiness units by sitting next to (\w+)/
-happiness = Hash.new {|h,k| h[k] = {} }
+happiness = Hash.new {|h,k| h[k] = Hash.new(0) }
 DATA.read.scan(regex).each do |left, sign, units, right|
   units = units.to_i
   units *= (sign == "gain") ? 1 : -1
   happiness[left][right] = units
 end
+happiness["Alpha"] = Hash.new(0)
 
 puts happiness.keys.permutation.map { |arrangement|
   arrangement << arrangement.first
