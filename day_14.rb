@@ -1,12 +1,32 @@
-regex = /(\w+) can fly (\d+) km\/s for (\d+) seconds, but then must rest for (\d+) seconds/
-puts DATA.read.scan(regex).map { |name, speed, time, rest|
-  distance = speed.to_i * time.to_i
-  total_time = time.to_i + rest.to_i
-  reps = 2503 / total_time
+class Reindeer
+  attr_reader *%i[ speed time rest ]
 
-  total_distance = reps * distance + [2503 % total_time, time.to_i].min * speed.to_i
-  [name, total_distance]
-}.max {|a,b| a.last <=> b.last }
+  def initialize(speed, time, rest)
+    @speed, @time, @rest = [speed, time, rest].map(&:to_i)
+  end
+
+  def distance(current_time)
+    distance = speed * time
+    total_time = time + rest
+    reps = current_time / total_time
+
+    reps * distance + [current_time % total_time, time].min * speed
+  end
+end
+
+regex = /(\w+) can fly (\d+) km\/s for (\d+) seconds, but then must rest for (\d+) seconds/
+reindeer = DATA.read.scan(regex).each.with_object({}) {|(name, speed, time, rest), reindeer|
+  reindeer[name] = Reindeer.new(speed, time, rest)
+}
+
+scores = (1..2503).each.with_object(Hash.new(0)) do |current_time, scores|
+  sorted = reindeer.group_by {|_,r| r.distance(current_time) }.sort
+  sorted.last.last.map(&:first).each do |name|
+    scores[name] += 1
+  end
+end
+
+puts scores.sort_by(&:last)
 __END__
 Dancer can fly 27 km/s for 5 seconds, but then must rest for 132 seconds.
 Cupid can fly 22 km/s for 2 seconds, but then must rest for 41 seconds.
