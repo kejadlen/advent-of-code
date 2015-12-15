@@ -1,19 +1,19 @@
 regex = /(\w+): capacity (-?\d+), durability (\d+), flavor (-?\d+), texture (-?\d+), calories (\d+)/
 ingredients = Hash[DATA.read.scan(regex).map {|name, *attrs| [name, attrs.map(&:to_i)] }]
-# ingredients = {"Butterscotch" => [-1, -2, 6, 3, 8],
-#                "Cinnamon" => [2, 3, -2, -1, 3]}
 max = 0
 (0..100).each do |i|
   (0..100-i).each do |j|
     (0..100-i-j).each do |k|
       l = 100-i-j-k
       a = [i,j,k,l]
-      s = (0..3).map {|s|
+      s = (0..4).map {|s|
         ingredients.values.map {|x| x[s] }.zip(a).map {|x,y| x*y }.inject(:+)
       }.map {|s|
         [s,0].max
-      }.inject(:*)
-      if s > max && 
+      }
+      cals = s.pop
+      s = s.inject(:*)
+      if s > max && cals == 500
         max = s
         p a, s
       end
