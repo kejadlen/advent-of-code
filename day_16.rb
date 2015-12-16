@@ -15,7 +15,15 @@ cars: 2
 perfumes: 1
 FACTS
 
-puts sues.select {|sue,data| facts.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] == v }}
+facts_gt = Hash[%w[ cats trees ].map {|k| [k,facts[k]] }]
+facts_lt = Hash[%w[ pomeranians goldfish ].map {|k| [k,facts[k]] }]
+%w[ cats trees pomeranians goldfish ].each {|k| facts.delete(k) }
+
+puts sues.select {|sue,data|
+  facts.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] == v } &&
+  facts_gt.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] > v } &&
+  facts_lt.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] < v }
+}
 
 __END__
 Sue 1: goldfish: 9, cars: 0, samoyeds: 9
