@@ -1,8 +1,33 @@
+require "letters"
+
+class Sue
+  MATCHERS = Hash.new("==")
+  %w[ cats trees ].each do |key|
+    MATCHERS[key] = ?>
+  end
+  %w[pomeranians goldfish ].each do |key|
+    MATCHERS[key] = ?<
+  end
+
+  attr_reader *%i[ properties ]
+
+  def initialize(properties)
+    @properties = properties
+  end
+
+  def match?(facts)
+    facts.select {|k,_| properties.keys.include?(k) }
+         .all? {|k,v| properties[k].send(MATCHERS[k], v) }
+  end
+end
+
 regex = /Sue (\d+): (.*)/
 sues = Hash[DATA.read.scan(regex).map { |attrs|
-  [attrs[0], Hash[attrs[1].split(", ").map {|i| i.split(": ") }]]
+  [attrs[0].to_i, Sue.new(Hash[attrs[1].split(", ")
+                                       .map {|i| i.split(": ") }
+                                       .map {|k,v| [k,v.to_i] }])]
 }]
-facts = Hash[<<FACTS.split("\n").map {|i| i.split(": ") }]
+facts = Hash[<<FACTS.split("\n").map {|i| i.split(": ") }.map {|k,v| [k,v.to_i] }]
 children: 3
 cats: 7
 samoyeds: 2
@@ -15,15 +40,7 @@ cars: 2
 perfumes: 1
 FACTS
 
-facts_gt = Hash[%w[ cats trees ].map {|k| [k,facts[k]] }]
-facts_lt = Hash[%w[ pomeranians goldfish ].map {|k| [k,facts[k]] }]
-%w[ cats trees pomeranians goldfish ].each {|k| facts.delete(k) }
-
-puts sues.select {|sue,data|
-  facts.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] == v } &&
-  facts_gt.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] > v } &&
-  facts_lt.select {|k,_| data.keys.include?(k) }.all? {|k,v| data[k] < v }
-}
+puts sues.select {|i,sue| sue.match?(facts) }
 
 __END__
 Sue 1: goldfish: 9, cars: 0, samoyeds: 9
