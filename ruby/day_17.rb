@@ -1,7 +1,7 @@
 buckets = DATA.read.split("\n").map(&:to_i)
-combos = (1..buckets.size).flat_map {|i| buckets.combination(i).select {|p| p.inject(:+) == 150 }}
-min = combos.map(&:size).min
-puts combos.select {|c| c.size == min }.size
+puts (1..buckets.size).flat_map {|i|
+  buckets.combination(i).select {|p| p.inject(:+) == 150 }
+}.group_by(&:size).sort_by(&:first).first.last.size
 __END__
 50
 44
