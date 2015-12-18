@@ -5,6 +5,10 @@ class Grid < Struct.new(:state)
       neighbors = self.neighbors(x,y).count(?#)
       (light == ?#) ? (([2,3].include?(neighbors)) ? ?# : ?.) : ((neighbors == 3) ? ?# : ?. )
     }}
+    state_[0][0] = ?#
+    state_[0][99] = ?#
+    state_[99][0] = ?#
+    state_[99][99] = ?#
     Grid.new(state_)
   end
 
