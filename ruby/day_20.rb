@@ -1,14 +1,16 @@
-require "prime"
+houses = Hash.new(0)
 
-house = 1
+elf = 0
 while true
-  house += 1
+  elf += 1
 
-  factors = house.prime_division
-  presents = factors.map {|f,x| (x+1).times.map {|i| f**i }.inject(:+) }.inject(:*)
+  50.times do |i|
+    house = (i+1)*elf
+    houses[house] += 11*elf
 
-  if presents >= 3600000
-    puts house
-    exit
+    if i.zero? && houses[house] >= 36000000
+      puts house
+      exit
+    end
   end
 end
