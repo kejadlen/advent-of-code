@@ -1,11 +1,14 @@
 replacements, molecule = DATA.read.chomp.split("\n\n")
-replacements = replacements.scan(/(\w+) \=> (\w+)/)
-puts replacements.flat_map {|k,v|
-  m = molecule.split(k, -1)
-  (0...m.size-1).map {|i|
-    m[0..i].join(k) + v + m[i+1..-1].join(k)
-  }
-}.uniq.size
+replacements = replacements.scan(/(\w+) \=> (\w+)/).map(&:reverse).sort_by {|k,_| -k.size}
+
+steps = 0
+until molecule == ?e
+  k,v = replacements.find {|k,_| molecule.include?(k) }
+  steps += molecule.scan(/#{k}/).size
+
+  molecule.gsub!(k, v)
+  puts "#{steps}: #{molecule}"
+end
 __END__
 Al => ThF
 Al => ThRnFAr
