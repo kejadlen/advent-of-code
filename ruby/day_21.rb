@@ -66,13 +66,13 @@ equipments = weapons.flat_map {|weapon|
       Equipment.new(weapon, armor, rings)
     }
   }
-}.sort_by {|e| e.cost }
+}.sort_by {|e| -e.cost }
 
 BOSS = Dude.new("boss", 100, 8, 2)
 YOU = Dude.new("you", 100, 0, 0)
 
 puts equipments.find {|e|
-  YOU.equipped(e).win_against?(BOSS)
+  !YOU.equipped(e).win_against?(BOSS)
 }.cost
 
 __END__
