@@ -31,6 +31,7 @@ end
 instructions = DATA.read.split("\n").map {|line| line.split(/,? /) }
 
 c = Computer.new(instructions)
+c.registers[?a] = 1
 c.run!
 p c.registers
 
