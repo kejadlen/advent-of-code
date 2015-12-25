@@ -60,6 +60,9 @@ class Simulation
         spell = spells.shift
         throw :done if spell.nil?
 
+        self.player.hp -= 1
+        throw :done if self.player.hp <= 0
+
         self.apply_effects
         self.cast(spell)
         self.check!
