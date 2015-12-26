@@ -2,9 +2,9 @@ require "letters"
 
 packages = DATA.read.split("\n").map(&:to_i)
 total = packages.inject(:+)
-weight = total/3
+weight = total/4
 
-(1..packages.size).each do |i|
+(2..packages.size).each do |i|
   puts i
   groups = packages.combination(i).select {|combo| combo.inject(:+) == weight }
   unless groups.empty?
