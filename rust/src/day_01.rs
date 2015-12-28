@@ -1,13 +1,13 @@
 use std::io;
 use std::str::Chars;
 
-use day;
+use day::Day;
 
 pub struct Day01 {
     input: String,
 }
 
-impl day::Day for Day01 {
+impl Day for Day01 {
     fn new(input: String) -> Day01 {
         Day01 { input: input }
     }
