@@ -13,7 +13,7 @@ impl Day for Day02 {
     }
 
     fn solve(self) -> io::Result<i32> {
-        Ok(self.presents.iter().fold(0u32, |acc, present| acc + present.wrapping_paper()) as i32)
+        Ok(self.presents.iter().fold(0u32, |acc, present| acc + present.ribbon()) as i32)
     }
 }
 
@@ -35,12 +35,26 @@ impl Present {
         self.surface_area() + self.slack()
     }
 
+    fn ribbon(&self) -> u32 {
+        *self.perimeters().iter().min().unwrap_or(&0) + self.volume()
+    }
+
     fn surface_area(&self) -> u32 {
         self.side_areas().iter().fold(0, |acc, &area| acc + 2 * area)
     }
 
     fn slack(&self) -> u32 {
         *self.side_areas().iter().min().unwrap_or(&0)
+    }
+
+    fn perimeters(&self) -> Vec<u32> {
+        vec![self.length + self.width,
+             self.width + self.height,
+             self.height + self.length ].iter().map(|&x| 2 * x).collect()
+    }
+
+    fn volume(&self) -> u32 {
+        self.length * self.width * self.height
     }
 
     fn side_areas(&self) -> Vec<u32> {
@@ -54,9 +68,11 @@ fn test_day02() {
     assert_eq!(52, present.surface_area());
     assert_eq!(6, present.slack());
     assert_eq!(58, present.wrapping_paper());
+    assert_eq!(34, present.ribbon());
 
     present = Present::new("1x1x10");
     assert_eq!(42, present.surface_area());
     assert_eq!(1, present.slack());
     assert_eq!(43, present.wrapping_paper());
+    assert_eq!(14, present.ribbon());
 }
