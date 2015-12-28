@@ -1,21 +1,20 @@
-use std::io::Error;
+use std::io;
 use std::str::Chars;
 
-pub trait Day {
-    fn new(String) -> Self;
-    fn solve(self) -> Result<i32, Error>;
-}
+pub use day::Day;
+
+mod day;
 
 pub struct Day01 {
     input: String,
 }
 
-impl Day for Day01 {
+impl day::Day for Day01 {
     fn new(input: String) -> Day01 {
         Day01 { input: input }
     }
 
-    fn solve(self) -> Result<i32, Error> {
+    fn solve(self) -> io::Result<i32> {
         let elevator = Elevator::new(self.input);
         Ok(1 + elevator.run().position(|f| f == -1).unwrap_or(0) as i32)
     }
