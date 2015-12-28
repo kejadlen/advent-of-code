@@ -3,16 +3,17 @@ use std::io;
 use day::Day;
 
 pub struct Day02 {
-    input: String,
+    presents: Vec<Present>,
 }
 
 impl Day for Day02 {
     fn new(input: String) -> Day02 {
-        Day02 { input: input }
+        let presents = input.split("\n").map(|line| Present::new(line));
+        Day02 { presents: presents.collect::<Vec<Present>>() }
     }
 
     fn solve(self) -> io::Result<i32> {
-        Ok(1)
+        Ok(self.presents.iter().fold(0u32, |acc, present| acc + present.wrapping_paper()) as i32)
     }
 }
 
@@ -23,7 +24,7 @@ struct Present {
 }
 
 impl Present {
-    fn new(input: String) -> Self {
+    fn new(input: &str) -> Self {
         let dimensions = input.split("x")
                               .map(|d| d.parse::<u32>().unwrap())
                               .collect::<Vec<u32>>();
@@ -49,12 +50,12 @@ impl Present {
 
 #[test]
 fn test_day02() {
-    let mut present = Present::new("2x3x4".to_string());
+    let mut present = Present::new("2x3x4");
     assert_eq!(52, present.surface_area());
     assert_eq!(6, present.slack());
     assert_eq!(58, present.wrapping_paper());
 
-    present = Present::new("1x1x10".to_string());
+    present = Present::new("1x1x10");
     assert_eq!(42, present.surface_area());
     assert_eq!(1, present.slack());
     assert_eq!(43, present.wrapping_paper());
