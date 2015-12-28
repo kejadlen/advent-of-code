@@ -17,7 +17,7 @@ impl Day for Day01 {
 
     fn solve(self) -> Result<i32, Error> {
         let elevator = Elevator::new(self.input);
-        Ok(elevator.run().last().unwrap_or(0))
+        Ok(1 + elevator.run().position(|f| f == -1).unwrap_or(0) as i32)
     }
 }
 
