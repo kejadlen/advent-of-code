@@ -23,6 +23,7 @@ struct Present {
     height: u32,
 }
 
+#[allow(dead_code)]
 impl Present {
     fn new(input: &str) -> Self {
         let dimensions = input.split("x")

@@ -1,7 +1,12 @@
-pub use day::Day;
-mod day;
+macro_rules! import_day {
+    ( $( $d:ident ),* ) => {
+        $(
+            pub use $d::*;
+            mod $d;
+        )*
+    }
+}
 
-pub use day_01::Day01;
-pub use day_02::Day02;
-mod day_01;
-mod day_02;
+import_day!(day,
+            day_01,
+            day_02);
