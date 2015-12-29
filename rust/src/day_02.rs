@@ -7,12 +7,12 @@ pub struct Day02 {
 }
 
 impl Day for Day02 {
-    fn new(input: String) -> Day02 {
+    fn new(input: &String) -> Day02 {
         let presents = input.split("\n").map(|line| Present::new(line));
         Day02 { presents: presents.collect::<Vec<Present>>() }
     }
 
-    fn solve(self) -> io::Result<i32> {
+    fn solve(&self) -> io::Result<i32> {
         Ok(self.presents.iter().fold(0u32, |acc, present| acc + present.ribbon()) as i32)
     }
 }

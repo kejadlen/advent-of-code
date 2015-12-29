@@ -8,12 +8,12 @@ pub struct Day01 {
 }
 
 impl Day for Day01 {
-    fn new(input: String) -> Day01 {
-        Day01 { input: input }
+    fn new(input: &String) -> Day01 {
+        Day01 { input: input.clone() }
     }
 
-    fn solve(self) -> io::Result<i32> {
-        let elevator = Elevator::new(self.input);
+    fn solve(&self) -> io::Result<i32> {
+        let elevator = Elevator::new(&self.input);
         Ok(1 + elevator.run().position(|f| f == -1).unwrap_or(0) as i32)
     }
 }
@@ -23,8 +23,8 @@ struct Elevator {
 }
 
 impl<'a> Elevator {
-    fn new(input: String) -> Self {
-        Elevator { instructions: input }
+    fn new(input: &String) -> Self {
+        Elevator { instructions: input.clone() }
     }
 
     fn run(self: &'a Self) -> ElevatorIterator<'a> {

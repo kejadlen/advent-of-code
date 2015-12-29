@@ -19,7 +19,7 @@ fn read_input(filename: &str) -> Result<String, io::Error> {
 }
 
 fn main() {
-    let input = read_input("day_02").unwrap();
-    let day = Day02::new(input);
+    let input = read_input("day_03").unwrap();
+    let day = Day03::new(&input);
     println!("{}", day.solve().unwrap());
 }
