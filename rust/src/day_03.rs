@@ -17,7 +17,24 @@ impl Day for Day03 {
     }
 
     fn solve(&self) -> io::Result<i32> {
-        let houses = Santa::houses_visited(&self.directions);
+        let mut santa = String::new();
+        let mut robo_santa = String::new();
+        let mut iter = self.directions.chars();
+
+        loop {
+            match iter.next() {
+                Some(c) => { santa.push(c) },
+                None => break,
+            }
+            match iter.next() {
+                Some(c) => { robo_santa.push(c) },
+                None => break,
+            }
+        }
+
+        let mut houses: HashMap<Point, u32> = HashMap::new();
+        Santa::houses_visited(&santa, &mut houses);
+        Santa::houses_visited(&robo_santa, &mut houses);
         Ok(houses.len() as i32)
     }
 }
@@ -35,16 +52,13 @@ impl<'a> Santa<'a> {
         }
     }
 
-    fn houses_visited(directions: &str) -> HashMap<Point, u32> {
+    fn houses_visited(directions: &str, houses: &mut HashMap<Point, u32>) {
         let santa = Santa::new(directions);
-        let mut houses = HashMap::new();
-        houses.insert(Point::origin(), 1);
+        houses.insert(santa.location, 1);
 
         for point in santa {
             *houses.entry(point).or_insert(0) += 1;
         }
-
-        houses
     }
 }
 
@@ -73,7 +87,8 @@ fn test_one() {
     let expected = vec![Point { x: 1, y: 0 }];
     assert_eq!(expected, points);
 
-    let houses = Santa::houses_visited(directions);
+    let mut houses: HashMap<Point, u32> = HashMap::new();
+    Santa::houses_visited(directions, &mut houses);
     assert_eq!(2, houses.len());
     assert_eq!(&1, houses.get(&Point::origin()).unwrap());
     assert_eq!(&1, houses.get(&Point { x: 1, y: 0 }).unwrap());
@@ -82,7 +97,9 @@ fn test_one() {
 #[test]
 fn test_two() {
     let directions = "^>v<";
-    let houses = Santa::houses_visited(directions);
+
+    let mut houses: HashMap<Point, u32> = HashMap::new();
+    Santa::houses_visited(directions, &mut houses);
     assert_eq!(4, houses.len());
     assert_eq!(&2, houses.get(&Point::origin()).unwrap());
     assert_eq!(&1, houses.get(&Point { x: 1, y: 0 }).unwrap());
@@ -91,13 +108,15 @@ fn test_two() {
 #[test]
 fn test_three() {
     let directions = "^v^v^v^v^v";
-    let houses = Santa::houses_visited(directions);
+
+    let mut houses: HashMap<Point, u32> = HashMap::new();
+    Santa::houses_visited(directions, &mut houses);
     assert_eq!(2, houses.len());
     assert_eq!(&6, houses.get(&Point::origin()).unwrap());
     assert_eq!(&5, houses.get(&Point { x: 0, y: 1 }).unwrap());
 }
 
-#[derive(Clone,Debug,Eq,Hash)]
+#[derive(Clone,Copy,Debug,Eq,Hash)]
 struct Point {
     x: i32,
     y: i32,
