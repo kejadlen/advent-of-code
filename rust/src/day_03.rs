@@ -12,8 +12,8 @@ pub struct Day03 {
 }
 
 impl Day for Day03 {
-    fn new(input: &String) -> Day03 {
-        Day03 { directions: input.clone() }
+    fn new(input: String) -> Day03 {
+        Day03 { directions: input }
     }
 
     fn solve(&self) -> io::Result<i32> {

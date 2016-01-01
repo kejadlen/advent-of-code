@@ -8,8 +8,8 @@ pub struct Day01 {
 }
 
 impl Day for Day01 {
-    fn new(input: &String) -> Day01 {
-        Day01 { input: input.clone() }
+    fn new(input: String) -> Day01 {
+        Day01 { input: input }
     }
 
     fn solve(&self) -> io::Result<i32> {
