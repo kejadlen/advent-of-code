@@ -73,8 +73,8 @@ impl<'a> Iterator for Santa<'a> {
             Some('<') => Point { x: -1, y: 0 },
             _ => return None,
         };
-        self.location = self.location.clone() + offset;
-        Some(self.location.clone())
+        self.location = self.location + offset;
+        Some(self.location)
     }
 }
 
