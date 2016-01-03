@@ -25,7 +25,7 @@ impl Day for Day04 {
             md5.input(key);
             md5.input(i.to_string().as_bytes());
             md5.result(&mut out);
-            if out[0] == 0 && out[1] == 0 && out[2] >> 4 == 0 {
+            if out[0] == 0 && out[1] == 0 && out[2] == 0 {
                 break;
             }
             md5.reset();
