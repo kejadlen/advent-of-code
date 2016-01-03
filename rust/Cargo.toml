@@ -2,3 +2,6 @@
 name = "advent_of_code"
 version = "0.1.0"
 authors = ["Alpha Chen <alpha.chen@gmail.com>"]
+
+[dependencies]
+rust-crypto = "^0.2"

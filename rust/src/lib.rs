@@ -1,3 +1,5 @@
+extern crate crypto;
+
 macro_rules! import_day {
     ( $( $d:ident ),* ) => {
         $(
@@ -10,4 +12,5 @@ macro_rules! import_day {
 import_day!(day,
             day_01,
             day_02,
-            day_03);
+            day_03,
+            day_04);
