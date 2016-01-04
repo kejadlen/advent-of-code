@@ -21,12 +21,7 @@ impl Day05 {
     }
 
     fn has_double_letters(string: &String) -> bool {
-        for win in string.as_bytes().windows(2) {
-            if win[0] == win[1] {
-                return true;
-            }
-        }
-        false
+        string.as_bytes().windows(2).any(|win| win[0] == win[1])
     }
 
     fn has_no_substrings(string: &String) -> bool {
