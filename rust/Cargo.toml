@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Alpha Chen <alpha.chen@gmail.com>"]
 
 [dependencies]
+regex = "0.1"
 rust-crypto = "^0.2"
