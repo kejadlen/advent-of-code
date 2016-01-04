@@ -8,11 +8,11 @@ pub struct Day05 {
     input: String,
 }
 
+#[allow(dead_code)]
 impl Day05 {
     fn is_nice(string: &String) -> bool {
-        Day05::has_three_vowels(string) &&
-            Day05::has_double_letters(string) &&
-            Day05::has_no_substrings(string)
+        Day05::has_pair_of_two_letters(string) &&
+            Day05::has_letter_sandwich(string)
     }
 
     fn has_three_vowels(string: &String) -> bool {
@@ -26,6 +26,17 @@ impl Day05 {
 
     fn has_no_substrings(string: &String) -> bool {
         !vec!["ab", "cd", "pq", "xy"].iter().any(|&s| string.contains(s))
+    }
+
+    fn has_pair_of_two_letters(string: &String) -> bool {
+        string.as_bytes().windows(2).any(|win| {
+            let s = String::from_utf8(win.to_vec()).unwrap();
+            string.split(&s).count() > 2
+        })
+    }
+
+    fn has_letter_sandwich(string: &String) -> bool {
+        string.as_bytes().windows(3).any(|win| win[0] == win[2])
     }
 }
 
@@ -41,9 +52,8 @@ impl Day for Day05 {
 
 #[test]
 fn test_nice() {
-    assert!( Day05::is_nice(&"ugknbfddgicrmopn".to_string()));
-    assert!( Day05::is_nice(&"aaa".to_string()));
-    assert!(!Day05::is_nice(&"jchzalrnumimnmhp".to_string()));
-    assert!(!Day05::is_nice(&"haegwjzuvuyypxyu".to_string()));
-    assert!(!Day05::is_nice(&"dvszwmarrgswjxmb".to_string()));
+    assert!( Day05::is_nice(&"qjhvhtzxzqqjkmpb".to_string()));
+    assert!( Day05::is_nice(&"xxyxx ".to_string()));
+    assert!(!Day05::is_nice(&"uurcxstgmygtbstg ".to_string()));
+    assert!(!Day05::is_nice(&"ieodomkazucvgmuy ".to_string()));
 }
