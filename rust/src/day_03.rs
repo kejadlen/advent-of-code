@@ -1,42 +1,29 @@
 use std::cmp::Eq;
 use std::collections::HashMap;
 use std::fmt;
-use std::io;
 use std::ops::Add;
 use std::str::Chars;
 
-use day::Day;
+pub fn solve(input: &str) -> i32 {
+    let mut santa = String::new();
+    let mut robo_santa = String::new();
+    let mut iter = input.chars();
 
-pub struct Day03 {
-    directions: String,
-}
-
-impl Day for Day03 {
-    fn new(input: String) -> Day03 {
-        Day03 { directions: input }
-    }
-
-    fn solve(&self) -> io::Result<i32> {
-        let mut santa = String::new();
-        let mut robo_santa = String::new();
-        let mut iter = self.directions.chars();
-
-        loop {
-            match iter.next() {
-                Some(c) => { santa.push(c) },
-                None => break,
-            }
-            match iter.next() {
-                Some(c) => { robo_santa.push(c) },
-                None => break,
-            }
+    loop {
+        match iter.next() {
+            Some(c) => { santa.push(c) },
+            None => break,
         }
-
-        let mut houses: HashMap<Point, u32> = HashMap::new();
-        Santa::houses_visited(&santa, &mut houses);
-        Santa::houses_visited(&robo_santa, &mut houses);
-        Ok(houses.len() as i32)
+        match iter.next() {
+            Some(c) => { robo_santa.push(c) },
+            None => break,
+        }
     }
+
+    let mut houses: HashMap<Point, u32> = HashMap::new();
+    Santa::houses_visited(&santa, &mut houses);
+    Santa::houses_visited(&robo_santa, &mut houses);
+    houses.len() as i32
 }
 
 struct Santa<'a> {

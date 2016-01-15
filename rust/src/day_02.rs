@@ -1,20 +1,6 @@
-use std::io;
-
-use day::Day;
-
-pub struct Day02 {
-    presents: Vec<Present>,
-}
-
-impl Day for Day02 {
-    fn new(input: String) -> Day02 {
-        let presents = input.split("\n").map(|line| Present::new(line));
-        Day02 { presents: presents.collect::<Vec<Present>>() }
-    }
-
-    fn solve(&self) -> io::Result<i32> {
-        Ok(self.presents.iter().fold(0u32, |acc, present| acc + present.ribbon()) as i32)
-    }
+pub fn solve(input: &str) -> i32 {
+    let presents = input.split("\n").map(|line| Present::new(line)).collect::<Vec<Present>>();
+    presents.iter().fold(0u32, |acc, present| acc + present.ribbon()) as i32
 }
 
 struct Present {

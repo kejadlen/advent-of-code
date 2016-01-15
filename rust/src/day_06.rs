@@ -1,23 +1,6 @@
-use std::io;
 use regex::Regex;
 
-use day::Day;
-
-pub struct Day06 {
-    input: String,
-}
-
-impl Day for Day06 {
-    fn new(input: String) -> Day06 {
-        Day06 { input: input }
-    }
-
-    fn solve(&self) -> io::Result<i32> {
-        Ok(solve(&self.input))
-    }
-}
-
-fn solve(input: &str) -> i32 {
+pub fn solve(input: &str) -> i32 {
     let mut lg = LightGrid::new();
 
     for line in input.lines() {

@@ -1,17 +1,15 @@
 extern crate crypto;
 extern crate regex;
 
-macro_rules! import_day {
+macro_rules! pub_mod {
     ( $( $d:ident ),* ) => {
         $(
-            pub use $d::*;
-            mod $d;
+            pub mod $d;
         )*
     }
 }
 
-import_day! {
-    day,
+pub_mod! {
     day_01,
     day_02,
     day_03,

@@ -7,6 +7,5 @@ use advent_of_code::*;
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).ok();
-    let day = Day06::new(input);
-    println!("{}", day.solve().unwrap());
+    println!("{}", day_06::solve(&input));
 }

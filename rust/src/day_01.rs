@@ -1,20 +1,8 @@
-use std::io;
 use std::str::Chars;
 
-use day::Day;
-
-pub struct Day01 {
-    elevator: Elevator,
-}
-
-impl Day for Day01 {
-    fn new(input: String) -> Day01 {
-        Day01 { elevator: Elevator::new(input) }
-    }
-
-    fn solve(&self) -> io::Result<i32> {
-        Ok(1 + self.elevator.run().position(|f| f == -1).unwrap_or(0) as i32)
-    }
+pub fn solve(input: &str) -> i32 {
+    let elevator = Elevator::new(input.to_string());
+    1 + elevator.run().position(|f| f == -1).unwrap_or(0) as i32
 }
 
 struct Elevator {
