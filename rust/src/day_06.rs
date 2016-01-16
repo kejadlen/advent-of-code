@@ -31,12 +31,12 @@ fn test_solve() {
 }
 
 struct LightGrid {
-    grid: [[bool; 1_000]; 1_000],
+    grid: Box<[bool; 1_000 * 1_000]>,
 }
 
 impl LightGrid {
     fn new() -> LightGrid {
-        LightGrid { grid: [[false; 1_000]; 1_000] }
+        LightGrid { grid: Box::new([false; 1_000 * 1_000]) }
     }
 
     fn turn_on(&mut self, rect: Rect) {
@@ -90,13 +90,13 @@ impl Index<Point> for LightGrid {
     type Output = bool;
 
     fn index(&self, _index: Point) -> &bool {
-        &self.grid[_index.0][_index.1]
+        &self.grid[1_000 * _index.0 + _index.1]
     }
 }
 
 impl IndexMut<Point> for LightGrid {
     fn index_mut(&mut self, _index: Point) -> &mut bool {
-        &mut self.grid[_index.0][_index.1]
+        &mut self.grid[1_000 * _index.0 + _index.1]
     }
 }
 
