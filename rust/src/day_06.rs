@@ -1,3 +1,4 @@
+use std::ops::{Index,IndexMut};
 use regex::Regex;
 
 pub fn solve(input: &str) -> i32 {
@@ -47,7 +48,7 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self.grid[i][j] = true;
+                self[Point(i, j)] = true;
             }
         }
     }
@@ -61,7 +62,7 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self.grid[i][j] = false;
+                self[Point(i, j)] = false;
             }
         }
     }
@@ -75,7 +76,7 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self.grid[i][j] = !self.grid[i][j];
+                self[Point(i, j)] = !self[Point(i, j)];
             }
         }
     }
@@ -85,22 +86,36 @@ impl LightGrid {
     }
 }
 
+impl Index<Point> for LightGrid {
+    type Output = bool;
+
+    fn index(&self, _index: Point) -> &bool {
+        &self.grid[_index.0][_index.1]
+    }
+}
+
+impl IndexMut<Point> for LightGrid {
+    fn index_mut(&mut self, _index: Point) -> &mut bool {
+        &mut self.grid[_index.0][_index.1]
+    }
+}
+
 #[test]
 fn test_light_grid() {
     let mut lg = LightGrid::new();
-    assert_eq!(false, lg.grid[0][0]);
+    assert_eq!(false, lg[Point(0, 0)]);
 
     lg.turn_on(Rect(Point(0, 0), Point(1, 1)));
-    assert_eq!(true, lg.grid[0][0]);
-    assert_eq!(false, lg.grid[2][0]);
+    assert_eq!(true, lg[Point(0, 0)]);
+    assert_eq!(false, lg[Point(2, 0)]);
 
     lg.turn_off(Rect(Point(1, 1), Point(2, 2)));
-    assert_eq!(true, lg.grid[0][0]);
-    assert_eq!(false, lg.grid[1][1]);
+    assert_eq!(true, lg[Point(0, 0)]);
+    assert_eq!(false, lg[Point(1, 1)]);
 
     lg.toggle(Rect(Point(0, 0), Point(1, 1)));
-    assert_eq!(false, lg.grid[0][0]);
-    assert_eq!(true, lg.grid[1][1]);
+    assert_eq!(false, lg[Point(0, 0)]);
+    assert_eq!(true, lg[Point(1, 1)]);
 }
 
 struct LightGridIterator<'a> {
@@ -122,7 +137,7 @@ impl<'a> Iterator for LightGridIterator<'a> {
             return None;
         }
 
-        let result = self.lg.grid[self.pos.0][self.pos.1];
+        let result = self.lg[Point(self.pos.0, self.pos.1)];
 
         self.pos = match self.pos {
             Point(x, 999) => Point(x+1, 0),
