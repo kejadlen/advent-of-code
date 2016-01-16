@@ -19,9 +19,14 @@ pub fn solve(input: &str) -> i32 {
 
 #[test]
 fn test_solve() {
-    assert_eq!(1_000_000, solve("turn on 0,0 through 999,999"));
-    assert_eq!(3_996, solve("turn on 0,0 through 999,999\nturn off 1,1 through 998,998"));
-    assert_eq!(3_996, solve("turn on 0,0 through 999,999\ntoggle 1,1 through 998,998"));
+    let mut input = vec!["turn on 0,0 through 999,999"];
+    assert_eq!(1_000_000, solve(&input.join("\n")));
+
+    input.push("turn off 1,1 through 998,998");
+    assert_eq!(3_996, solve(&input.join("\n")));
+
+    input.push("toggle 2,2 through 997,997");
+    assert_eq!(996012, solve(&input.join("\n")));
 }
 
 struct LightGrid {
