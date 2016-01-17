@@ -15,7 +15,7 @@ pub fn solve(input: &str) -> i32 {
         };
     }
 
-    lg.iter().filter(|l| *l).count() as i32
+    lg.iter().fold(0, |acc, brightness| acc + brightness) as i32
 }
 
 #[test]
@@ -27,16 +27,16 @@ fn test_solve() {
     assert_eq!(3_996, solve(&input.join("\n")));
 
     input.push("toggle 2,2 through 997,997");
-    assert_eq!(996012, solve(&input.join("\n")));
+    assert_eq!(1_988_028, solve(&input.join("\n")));
 }
 
 struct LightGrid {
-    grid: Box<[bool; 1_000 * 1_000]>,
+    grid: Box<[u32; 1_000 * 1_000]>,
 }
 
 impl LightGrid {
     fn new() -> LightGrid {
-        LightGrid { grid: box [false; 1_000 * 1_000] }
+        LightGrid { grid: box [0; 1_000 * 1_000] }
     }
 
     fn turn_on(&mut self, rect: Rect) {
@@ -48,7 +48,7 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self[Point(i, j)] = true;
+                self[Point(i, j)] += 1;
             }
         }
     }
@@ -62,7 +62,9 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self[Point(i, j)] = false;
+                if self[Point(i, j)] > 0 {
+                    self[Point(i, j)] -= 1;
+                }
             }
         }
     }
@@ -76,7 +78,7 @@ impl LightGrid {
 
         for i in x[0]..x[1]+1 {
             for j in y[0]..y[1]+1 {
-                self[Point(i, j)] = !self[Point(i, j)];
+                self[Point(i, j)] += 2;
             }
         }
     }
@@ -87,15 +89,15 @@ impl LightGrid {
 }
 
 impl Index<Point> for LightGrid {
-    type Output = bool;
+    type Output = u32;
 
-    fn index(&self, _index: Point) -> &bool {
+    fn index(&self, _index: Point) -> &u32 {
         &self.grid[1_000 * _index.0 + _index.1]
     }
 }
 
 impl IndexMut<Point> for LightGrid {
-    fn index_mut(&mut self, _index: Point) -> &mut bool {
+    fn index_mut(&mut self, _index: Point) -> &mut u32 {
         &mut self.grid[1_000 * _index.0 + _index.1]
     }
 }
@@ -103,19 +105,19 @@ impl IndexMut<Point> for LightGrid {
 #[test]
 fn test_light_grid() {
     let mut lg = LightGrid::new();
-    assert_eq!(false, lg[Point(0, 0)]);
+    assert_eq!(0, lg[Point(0, 0)]);
 
     lg.turn_on(Rect(Point(0, 0), Point(1, 1)));
-    assert_eq!(true, lg[Point(0, 0)]);
-    assert_eq!(false, lg[Point(2, 0)]);
+    assert_eq!(1, lg[Point(0, 0)]);
+    assert_eq!(0, lg[Point(2, 0)]);
 
     lg.turn_off(Rect(Point(1, 1), Point(2, 2)));
-    assert_eq!(true, lg[Point(0, 0)]);
-    assert_eq!(false, lg[Point(1, 1)]);
+    assert_eq!(1, lg[Point(0, 0)]);
+    assert_eq!(0, lg[Point(1, 1)]);
 
     lg.toggle(Rect(Point(0, 0), Point(1, 1)));
-    assert_eq!(false, lg[Point(0, 0)]);
-    assert_eq!(true, lg[Point(1, 1)]);
+    assert_eq!(3, lg[Point(0, 0)]);
+    assert_eq!(2, lg[Point(1, 1)]);
 }
 
 struct LightGridIterator<'a> {
@@ -130,7 +132,7 @@ impl<'a> LightGridIterator<'a> {
 }
 
 impl<'a> Iterator for LightGridIterator<'a> {
-    type Item = bool;
+    type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.pos == Point(1_000, 0) {
