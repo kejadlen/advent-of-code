@@ -36,7 +36,7 @@ struct LightGrid {
 
 impl LightGrid {
     fn new() -> LightGrid {
-        LightGrid { grid: Box::new([false; 1_000 * 1_000]) }
+        LightGrid { grid: box [false; 1_000 * 1_000] }
     }
 
     fn turn_on(&mut self, rect: Rect) {
@@ -148,6 +148,7 @@ impl<'a> Iterator for LightGridIterator<'a> {
     }
 }
 
+#[derive(Debug)]
 struct Instruction {
     instruction: String,
     rect: Rect,

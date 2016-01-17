@@ -1,3 +1,5 @@
+#![feature(box_syntax)]
+
 extern crate crypto;
 extern crate regex;
 
