@@ -24,10 +24,10 @@ pub fn solve(input: &str, wire: &str) -> u16 {
 #[test]
 fn test_circuit() {
     let circuit = Circuit::new("123 -> x\nx -> y\nNOT x -> h");
-    assert_eq!(Some(&Signal::Value(123)), circuit.connections.get(&Wire("x")));
-    assert_eq!(Some(&Signal::Wire(Wire("x"))), circuit.connections.get(&Wire("y")));
-    assert_eq!(Some(&Signal::Wire(Wire("x"))), circuit.connections.get(&Wire("y")));
-    assert_eq!(Some(&Signal::Gate(Gate::Not(Wire("x")))), circuit.connections.get(&Wire("h")));
+    assert_eq!(Signal::Value(123), circuit.connections[&Wire("x")]);
+    assert_eq!(Signal::Wire(Wire("x")), circuit.connections[&Wire("y")]);
+    assert_eq!(Signal::Wire(Wire("x")), circuit.connections[&Wire("y")]);
+    assert_eq!(Signal::Gate(Gate::Not(Wire("x"))), circuit.connections[&Wire("h")]);
 }
 
 struct Circuit<'a> {
