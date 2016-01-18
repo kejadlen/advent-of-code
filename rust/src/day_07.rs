@@ -23,6 +23,7 @@ NOT y -> i";
 
 pub fn solve(input: &str, wire_id: &str) -> u16 {
     let mut circuit = Circuit::new(input);
+    circuit.connections.insert(Wire("b"), Signal::Value(3176));
     circuit.signal_on(wire_id)
 }
 
