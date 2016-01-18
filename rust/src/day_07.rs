@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::ops::Index;
 
 #[test]
-#[ignore]
 fn test_solve() {
     let input = "123 -> x
 456 -> y
@@ -13,12 +12,19 @@ y RSHIFT 2 -> g
 NOT x -> h
 NOT y -> i";
 
+    assert_eq!(72, solve(input, "d"));
+    assert_eq!(507, solve(input, "e"));
+    assert_eq!(492, solve(input, "f"));
+    assert_eq!(114, solve(input, "g"));
+    assert_eq!(65412, solve(input, "h"));
+    assert_eq!(65079, solve(input, "i"));
     assert_eq!(123, solve(input, "x"));
+    assert_eq!(456, solve(input, "y"));
 }
 
-pub fn solve(input: &str, wire: &str) -> u16 {
-    let circuit = Circuit::new(input);
-    0
+pub fn solve(input: &str, wire_id: &str) -> u16 {
+    let mut circuit = Circuit::new(input);
+    circuit.signal_on(wire_id)
 }
 
 #[test]
@@ -52,13 +58,17 @@ impl<'a> Circuit<'a> {
         Circuit { connections: connections }
     }
 
+    // TODO This should probably return a Result...
+    // TODO Is there a way for this to not be mutable?
     fn signal_on(&mut self, wire_id: &'a str) -> u16 {
-        let value = match self.connections.get(&Wire(wire_id)) {
-            Some(&Signal::Value(value)) => value,
-            Some(&Signal::Wire(Wire(input_wire_id))) => self.signal_on(input_wire_id),
-            Some(&Signal::Gate(Gate::And(Wire(a), Wire(b)))) => self.signal_on(a) & self.signal_on(b),
-            Some(&Signal::Gate(Gate::Not(Wire(a)))) => !self.signal_on(a),
-            _ => 0,
+        let value = match self.connections.get(&Wire(wire_id)).unwrap() {
+            &Signal::Value(value) => value,
+            &Signal::Wire(Wire(input_wire_id)) => self.signal_on(input_wire_id),
+            &Signal::Gate(Gate::And(Wire(a), Wire(b))) => self.signal_on(a) & self.signal_on(b),
+            &Signal::Gate(Gate::LeftShift(Wire(a), i)) => self.signal_on(a) << i,
+            &Signal::Gate(Gate::Not(Wire(a))) => !self.signal_on(a),
+            &Signal::Gate(Gate::Or(Wire(a), Wire(b))) => self.signal_on(a) | self.signal_on(b),
+            &Signal::Gate(Gate::RightShift(Wire(a), i)) => self.signal_on(a) >> i,
         };
         value
     }
