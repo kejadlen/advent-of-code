@@ -24,20 +24,20 @@ pub fn solve(input: &str, wire: &str) -> u16 {
 #[test]
 fn test_circuit() {
     let circuit = Circuit::new("123 -> x");
-    assert_eq!(Some(&Signal::Value(123)), circuit.connections.get(&Wire("x".to_string())));
+    assert_eq!(Some(&Signal::Value(123)), circuit.connections.get(&Wire("x")));
 }
 
-struct Circuit {
-    connections: HashMap<Wire, Signal>,
+struct Circuit<'a> {
+    connections: HashMap<Wire<'a>, Signal<'a>>,
 }
 
-impl Circuit {
-    fn new(input: &str) -> Circuit{
+impl<'a> Circuit<'a> {
+    fn new(input: &str) -> Circuit {
         let mut connections = HashMap::new();
         for line in input.lines()
                          .map(|line| line.split(" -> ")
                                          .collect::<Vec<_>>()) {
-            let wire = Wire(line.last().unwrap().to_string());
+            let wire = Wire(line.last().unwrap());
             let signal = Signal::new(line.first().unwrap().split(" ").collect());
             connections.insert(wire, signal);
         }
@@ -47,27 +47,27 @@ impl Circuit {
 }
 
 #[derive(Debug,Eq,Hash,PartialEq)]
-struct Wire(String);
+struct Wire<'a>(&'a str);
 
 #[derive(Debug,PartialEq)]
-enum Signal {
-    Gate(Gate),
-    Wire(Wire),
+enum Signal<'a> {
+    Gate(Gate<'a>),
+    Wire(Wire<'a>),
     Value(u16),
 }
 
-impl Signal {
+impl<'a> Signal<'a> {
     fn new(input: Vec<&str>) -> Signal {
         match &input[..] {
-            [a, "AND", b] => Signal::Gate(Gate::And(Wire(a.to_string()), Wire(b.to_string()))),
-            ["NOT", a] => Signal::Gate(Gate::Not(Wire(a.to_string()))),
-            [a, "OR", b] => Signal::Gate(Gate::Or(Wire(a.to_string()), Wire(b.to_string()))),
-            [a, "RSHIFT", b] => Signal::Gate(Gate::RightShift(Wire(a.to_string()), b.parse::<u16>().unwrap())),
-            [a, "LSHIFT", b] => Signal::Gate(Gate::LeftShift(Wire(a.to_string()), b.parse::<u16>().unwrap())),
+            [a, "AND", b] => Signal::Gate(Gate::And(Wire(a), Wire(b))),
+            ["NOT", a] => Signal::Gate(Gate::Not(Wire(a))),
+            [a, "OR", b] => Signal::Gate(Gate::Or(Wire(a), Wire(b))),
+            [a, "RSHIFT", b] => Signal::Gate(Gate::RightShift(Wire(a), b.parse::<u16>().unwrap())),
+            [a, "LSHIFT", b] => Signal::Gate(Gate::LeftShift(Wire(a), b.parse::<u16>().unwrap())),
             [value] => {
                 match value.parse::<u16>() {
                     Ok(value) => Signal::Value(value),
-                    Err(_) => Signal::Wire(Wire(value.to_string())),
+                    Err(_) => Signal::Wire(Wire(value)),
                 }
             }
             _ => panic!("Unrecognized input: {:?}", input),
@@ -76,10 +76,10 @@ impl Signal {
 }
 
 #[derive(Debug,PartialEq)]
-enum Gate {
-    And(Wire, Wire),
-    LeftShift(Wire, u16),
-    Not(Wire),
-    Or(Wire, Wire),
-    RightShift(Wire, u16),
+enum Gate<'a> {
+    And(Wire<'a>, Wire<'a>),
+    LeftShift(Wire<'a>, u16),
+    Not(Wire<'a>),
+    Or(Wire<'a>, Wire<'a>),
+    RightShift(Wire<'a>, u16),
 }
