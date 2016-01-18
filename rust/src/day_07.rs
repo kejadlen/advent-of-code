@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[test]
-fn test_solve() {
+fn test_day_07() {
     let input = "123 -> x
 456 -> y
 x AND y -> d
@@ -61,19 +61,21 @@ impl<'a> Circuit<'a> {
     // TODO This should probably return a Result...
     // TODO Is there a way for this to not be mutable?
     fn signal_on(&mut self, wire_id: &'a str) -> u16 {
+        // NOTE Would've preferred to use unwrap_or_else on getting the signal, but couldn't
+        // figure out how to make the closure return the borrowed value correctly.
         if let Ok(value) = wire_id.parse::<u16>() {
             return value;
         }
 
         let wire = Wire(wire_id);
-        let value = match self.connections.get(&wire).unwrap() {
-            &Signal::Value(value) => return value,
-            &Signal::Wire(Wire(input_wire_id)) => self.signal_on(input_wire_id),
-            &Signal::Gate(Gate::And(Wire(a), Wire(b))) => self.signal_on(a) & self.signal_on(b),
-            &Signal::Gate(Gate::LeftShift(Wire(a), i)) => self.signal_on(a) << i,
-            &Signal::Gate(Gate::Not(Wire(a))) => !self.signal_on(a),
-            &Signal::Gate(Gate::Or(Wire(a), Wire(b))) => self.signal_on(a) | self.signal_on(b),
-            &Signal::Gate(Gate::RightShift(Wire(a), i)) => self.signal_on(a) >> i,
+        let value = match *self.connections.get(&wire).unwrap() {
+            Signal::Value(value) => return value,
+            Signal::Wire(Wire(input_wire_id)) => self.signal_on(input_wire_id),
+            Signal::Gate(Gate::And(Wire(a), Wire(b))) => self.signal_on(a) & self.signal_on(b),
+            Signal::Gate(Gate::LeftShift(Wire(a), i)) => self.signal_on(a) << i,
+            Signal::Gate(Gate::Not(Wire(a))) => !self.signal_on(a),
+            Signal::Gate(Gate::Or(Wire(a), Wire(b))) => self.signal_on(a) | self.signal_on(b),
+            Signal::Gate(Gate::RightShift(Wire(a), i)) => self.signal_on(a) >> i,
         };
         self.connections.insert(wire, Signal::Value(value));
         value
