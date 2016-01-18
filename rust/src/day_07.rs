@@ -23,11 +23,16 @@ pub fn solve(input: &str, wire: &str) -> u16 {
 
 #[test]
 fn test_circuit() {
-    let circuit = Circuit::new("123 -> x\nx -> y\nNOT x -> h");
+    let mut circuit = Circuit::new("123 -> x\nx -> y\nNOT x -> h\nx AND y -> i");
+
     assert_eq!(Signal::Value(123), circuit.connections[&Wire("x")]);
     assert_eq!(Signal::Wire(Wire("x")), circuit.connections[&Wire("y")]);
-    assert_eq!(Signal::Wire(Wire("x")), circuit.connections[&Wire("y")]);
     assert_eq!(Signal::Gate(Gate::Not(Wire("x"))), circuit.connections[&Wire("h")]);
+
+    assert_eq!(123, circuit.signal_on("x"));
+    assert_eq!(123, circuit.signal_on("y"));
+    assert_eq!(65412, circuit.signal_on("h"));
+    assert_eq!(123, circuit.signal_on("i"));
 }
 
 struct Circuit<'a> {
@@ -45,6 +50,17 @@ impl<'a> Circuit<'a> {
         }
 
         Circuit { connections: connections }
+    }
+
+    fn signal_on(&mut self, wire_id: &'a str) -> u16 {
+        let value = match self.connections.get(&Wire(wire_id)) {
+            Some(&Signal::Value(value)) => value,
+            Some(&Signal::Wire(Wire(input_wire_id))) => self.signal_on(input_wire_id),
+            Some(&Signal::Gate(Gate::And(Wire(a), Wire(b)))) => self.signal_on(a) & self.signal_on(b),
+            Some(&Signal::Gate(Gate::Not(Wire(a)))) => !self.signal_on(a),
+            _ => 0,
+        };
+        value
     }
 }
 
