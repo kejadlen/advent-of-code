@@ -58,17 +58,12 @@ impl<'a> Circuit<'a> {
         Circuit { connections: connections }
     }
 
-    // TODO This should probably return a Result...
+    // TODO This should probably return a Result...?
     // TODO Is there a way for this to not be mutable?
     fn signal_on(&mut self, wire_id: &'a str) -> u16 {
-        // NOTE Would've preferred to use unwrap_or_else on getting the signal, but couldn't
-        // figure out how to make the closure return the borrowed value correctly.
-        if let Ok(value) = wire_id.parse::<u16>() {
-            return value;
-        }
-
         let wire = Wire(wire_id);
-        let value = match *self.connections.get(&wire).unwrap() {
+        let value = match self.connections.get(&wire).cloned()
+                                          .unwrap_or_else(|| Signal::Value(wire_id.parse::<u16>().unwrap())) {
             Signal::Value(value) => return value,
             Signal::Wire(Wire(input_wire_id)) => self.signal_on(input_wire_id),
             Signal::Gate(Gate::And(Wire(a), Wire(b))) => self.signal_on(a) & self.signal_on(b),
@@ -82,10 +77,10 @@ impl<'a> Circuit<'a> {
     }
 }
 
-#[derive(Debug,Eq,Hash,PartialEq)]
+#[derive(Clone,Debug,Eq,Hash,PartialEq)]
 struct Wire<'a>(&'a str);
 
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 enum Signal<'a> {
     Gate(Gate<'a>),
     Wire(Wire<'a>),
@@ -111,7 +106,7 @@ impl<'a> Signal<'a> {
     }
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 enum Gate<'a> {
     And(Wire<'a>, Wire<'a>),
     LeftShift(Wire<'a>, u16),
