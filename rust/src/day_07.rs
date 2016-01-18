@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Index;
 
 #[test]
 fn test_solve() {
@@ -50,8 +49,8 @@ impl<'a> Circuit<'a> {
         let mut connections = HashMap::new();
         for line in input.lines()
                          .map(|line| line.split(" -> ").collect::<Vec<_>>()) {
-            let wire = Wire(line.last().unwrap());
-            let signal = Signal::new(line.first().unwrap().split(" ").collect());
+            let wire = Wire(line.last().expect("wire"));
+            let signal = Signal::new(line.first().expect("line").split(" ").collect());
             connections.insert(wire, signal);
         }
 
@@ -61,8 +60,13 @@ impl<'a> Circuit<'a> {
     // TODO This should probably return a Result...
     // TODO Is there a way for this to not be mutable?
     fn signal_on(&mut self, wire_id: &'a str) -> u16 {
-        let value = match self.connections.get(&Wire(wire_id)).unwrap() {
-            &Signal::Value(value) => value,
+        if let Ok(value) = wire_id.parse::<u16>() {
+            return value;
+        }
+
+        let wire = Wire(wire_id);
+        let value = match self.connections.get(&wire).unwrap() {
+            &Signal::Value(value) => return value,
             &Signal::Wire(Wire(input_wire_id)) => self.signal_on(input_wire_id),
             &Signal::Gate(Gate::And(Wire(a), Wire(b))) => self.signal_on(a) & self.signal_on(b),
             &Signal::Gate(Gate::LeftShift(Wire(a), i)) => self.signal_on(a) << i,
@@ -70,6 +74,7 @@ impl<'a> Circuit<'a> {
             &Signal::Gate(Gate::Or(Wire(a), Wire(b))) => self.signal_on(a) | self.signal_on(b),
             &Signal::Gate(Gate::RightShift(Wire(a), i)) => self.signal_on(a) >> i,
         };
+        self.connections.insert(wire, Signal::Value(value));
         value
     }
 }
@@ -90,8 +95,8 @@ impl<'a> Signal<'a> {
             [a, "AND", b] => Signal::Gate(Gate::And(Wire(a), Wire(b))),
             ["NOT", a] => Signal::Gate(Gate::Not(Wire(a))),
             [a, "OR", b] => Signal::Gate(Gate::Or(Wire(a), Wire(b))),
-            [a, "RSHIFT", b] => Signal::Gate(Gate::RightShift(Wire(a), b.parse::<u16>().unwrap())),
-            [a, "LSHIFT", b] => Signal::Gate(Gate::LeftShift(Wire(a), b.parse::<u16>().unwrap())),
+            [a, "LSHIFT", b] => Signal::Gate(Gate::LeftShift(Wire(a), b.parse::<u16>().expect("lshift"))),
+            [a, "RSHIFT", b] => Signal::Gate(Gate::RightShift(Wire(a), b.parse::<u16>().expect("rshift"))),
             [value] => {
                 match value.parse::<u16>() {
                     Ok(value) => Signal::Value(value),
