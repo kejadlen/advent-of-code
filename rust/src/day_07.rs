@@ -23,8 +23,11 @@ pub fn solve(input: &str, wire: &str) -> u16 {
 
 #[test]
 fn test_circuit() {
-    let circuit = Circuit::new("123 -> x");
+    let circuit = Circuit::new("123 -> x\nx -> y\nNOT x -> h");
     assert_eq!(Some(&Signal::Value(123)), circuit.connections.get(&Wire("x")));
+    assert_eq!(Some(&Signal::Wire(Wire("x"))), circuit.connections.get(&Wire("y")));
+    assert_eq!(Some(&Signal::Wire(Wire("x"))), circuit.connections.get(&Wire("y")));
+    assert_eq!(Some(&Signal::Gate(Gate::Not(Wire("x")))), circuit.connections.get(&Wire("h")));
 }
 
 struct Circuit<'a> {
@@ -35,8 +38,7 @@ impl<'a> Circuit<'a> {
     fn new(input: &str) -> Circuit {
         let mut connections = HashMap::new();
         for line in input.lines()
-                         .map(|line| line.split(" -> ")
-                                         .collect::<Vec<_>>()) {
+                         .map(|line| line.split(" -> ").collect::<Vec<_>>()) {
             let wire = Wire(line.last().unwrap());
             let signal = Signal::new(line.first().unwrap().split(" ").collect());
             connections.insert(wire, signal);
