@@ -1,14 +1,14 @@
 #[test]
 fn test_day_08() {
-    assert_eq!(2, solve(r#""""#));
-    assert_eq!(2, solve(r#""abc""#));
-    assert_eq!(3, solve(r#""aaa\"aaa""#));
+    assert_eq!(4, solve(r#""""#));
+    assert_eq!(4, solve(r#""abc""#));
+    assert_eq!(6, solve(r#""aaa\"aaa""#));
     assert_eq!(5, solve(r#""\x27""#));
     assert_eq!(5, solve(r#""\xfa""#));
 }
 
 pub fn solve(input: &str) -> usize {
-    input.lines().fold(0, |sum, s| sum + s.len() - decode(s).chars().count())
+    input.lines().fold(0, |sum, s| sum + encode(s).chars().count() - s.len())
 }
 
 #[test]
@@ -43,4 +43,17 @@ fn decode(string: &str) -> String {
         };
     }
     out
+}
+
+#[test]
+fn test_encode() {
+    assert_eq!(r#""\"\"""#, encode(r#""""#));
+    assert_eq!(r#""\"abc\"""#, encode(r#""abc""#));
+    assert_eq!(r#""\"aaa\\\"aaa\"""#, encode(r#""aaa\"aaa""#));
+    assert_eq!(r#""\"\\x27\"""#, encode(r#""\x27""#));
+    assert_eq!(r#""\"\\xfa\"""#, encode(r#""\xfa""#));
+}
+
+fn encode(string: &str) -> String {
+    format!(r#""{}""#, string.replace(r#"\"#, r#"\\"#).replace(r#"""#, r#"\""#))
 }
