@@ -27,26 +27,25 @@ pub fn solve(input: &str) -> usize {
 
 fn decode(string: &str) -> String {
     let mut out = "".to_owned();
-    let mut it = string[1..string.len()-1].chars();
+
+    let mut chars = string.chars().map(|c| Some(c)).collect::<Vec<_>>();
+    chars.append(&mut vec![None, None, None]);
+    let mut it = chars.windows(4);
     loop {
-        let c = match it.next() {
-            Some('\\') => {
-                match it.next() {
-                    Some('\\') => '\\',
-                    Some('"') => '"',
-                    Some('x') => {
-                        let mut b = it.next().and_then(|c| c.to_digit(16)).unwrap() << 4;
-                        b += it.next().and_then(|c| c.to_digit(16)).unwrap();
-                        b as u8 as char
-                    },
-                    Some(c) => panic!("Unexpected escaped char: {}", c),
-                    None => panic!("Unexpected end of string"),
-                }
-            }
-            Some(c) => c,
-            None => break,
+        match it.next() {
+            Some([Some('"'), None, None, None]) => break,
+            Some([Some('"'), _, _, _]) => {},
+            Some([Some('\\'), Some('\\'), _, _]) => { it.next(); out.push('\\'); },
+            Some([Some('\\'), Some('"'), _, _]) => { it.next(); out.push('"'); },
+            Some([Some('\\'), Some('x'), Some(a), Some(b)]) => {
+                it.next(); it.next(); it.next();
+                let c = (a.to_digit(16).unwrap_or(0) << 4) + (b.to_digit(16).unwrap_or(0));
+                out.push(c as u8 as char);
+            },
+            Some([Some(c), _, _, _]) => { out.push(c); },
+            Some(x) => panic!("{:?}", x),
+            None => panic!(""),
         };
-        out.push(c);
     }
     out
 }
