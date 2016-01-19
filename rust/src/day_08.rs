@@ -1,28 +1,23 @@
 #[test]
 fn test_day_08() {
-    let mut input = r#""""#;
-    assert_eq!("", decode(input));
-    assert_eq!(2, solve(input));
-
-    input = r#""abc""#;
-    assert_eq!("abc", decode(input));
-    assert_eq!(2, solve(input));
-
-    input = r#""aaa\"aaa""#;
-    assert_eq!("aaa\"aaa", decode(input));
-    assert_eq!(3, solve(input));
-
-    input = r#""\x27""#;
-    assert_eq!("'", decode(input));
-    assert_eq!(5, solve(input));
-
-    input = r#""\xfa""#;
-    assert_eq!(1, decode(input).chars().count());
-    assert_eq!(5, solve(input));
+    assert_eq!(2, solve(r#""""#));
+    assert_eq!(2, solve(r#""abc""#));
+    assert_eq!(3, solve(r#""aaa\"aaa""#));
+    assert_eq!(5, solve(r#""\x27""#));
+    assert_eq!(5, solve(r#""\xfa""#));
 }
 
 pub fn solve(input: &str) -> usize {
     input.lines().fold(0, |sum, s| sum + s.len() - decode(s).chars().count())
+}
+
+#[test]
+fn test_decode() {
+    assert_eq!("", decode(r#""""#));
+    assert_eq!("abc", decode(r#""abc""#));
+    assert_eq!("aaa\"aaa", decode(r#""aaa\"aaa""#));
+    assert_eq!("'", decode(r#""\x27""#));
+    assert_eq!(1, decode(r#""\xfa""#).chars().count());
 }
 
 fn decode(string: &str) -> String {
