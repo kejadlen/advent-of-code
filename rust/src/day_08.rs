@@ -20,6 +20,7 @@ fn test_decode() {
     assert_eq!(1, decode(r#""\xfa""#).chars().count());
 }
 
+#[allow(dead_code)]
 fn decode(string: &str) -> String {
     let mut out = "".to_owned();
 

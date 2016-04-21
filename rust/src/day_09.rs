@@ -59,7 +59,7 @@ impl<'a> Day09<'a> {
 
     fn routes(&self) -> Vec<Route> {
         let mut locations = self.locations.iter()
-            .map(|l| l.clone())
+            .cloned()
             .collect::<Vec<Location>>();
         let heap = Heap::new(&mut locations);
         heap.map(|p| self.route(p)).collect()
