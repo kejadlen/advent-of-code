@@ -24,12 +24,12 @@ Dublin to Belfast = 141";
 
     assert_eq!(6, day.routes().len());
 
-    assert_eq!(605, solve(input));
+    assert_eq!(982, solve(input));
 }
 
 pub fn solve(input: &str) -> usize {
     let day = Day09::new(input);
-    day.routes().iter().map(|r| r.distance).min().unwrap()
+    day.routes().iter().map(|r| r.distance).max().unwrap()
 }
 
 struct Day09<'a> {
