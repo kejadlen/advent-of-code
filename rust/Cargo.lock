@@ -2,6 +2,7 @@
 name = "advent_of_code"
 version = "0.1.0"
 dependencies = [
+ "permutohedron 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.44 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-crypto 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -58,6 +59,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "permutohedron"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rand"
