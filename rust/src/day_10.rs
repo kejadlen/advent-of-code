@@ -18,7 +18,7 @@ pub fn solve(input: &str) -> usize {
         .collect::<Vec<usize>>();
     let mut look_and_say = LookAndSay { seq: seq };
 
-    for _ in 0..40  {
+    for _ in 0..50  {
         look_and_say.next();
     }
 
