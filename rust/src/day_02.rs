@@ -1,7 +1,5 @@
 pub fn solve(input: &str) -> i32 {
-  let presents =
-    input.split('\n').map(|line| Present::new(line)).collect::<Vec<Present>>();
-  presents.iter().fold(0u32, |acc, present| acc + present.ribbon()) as i32
+  input.lines().map(|line| Present::new(line).ribbon()).sum::<u32>() as i32
 }
 
 struct Present {
@@ -15,7 +13,7 @@ impl Present {
   fn new(input: &str) -> Self {
     let dimensions = input.split('x')
       .map(|d| d.parse::<u32>().unwrap())
-      .collect::<Vec<u32>>();
+      .collect::<Vec<_>>();
     Present {
       length: dimensions[0],
       width: dimensions[1],
@@ -32,7 +30,7 @@ impl Present {
   }
 
   fn surface_area(&self) -> u32 {
-    self.side_areas().iter().fold(0, |acc, &area| acc + 2 * area)
+    self.side_areas().iter().map(|area| 2 * area).sum()
   }
 
   fn slack(&self) -> u32 {
