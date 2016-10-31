@@ -20,7 +20,8 @@ fn main() {
       Some("7") => day_07::solve(&input, "a").to_string(),
       Some("8") => day_08::solve(&input).to_string(),
       Some("9") => day_09::solve(&input).to_string(),
-      _ => day_10::solve(&input),
+      Some("10") => day_10::solve(&input).to_string(),
+      _ => day_11::Password::new("cqjxjnds").next().into(),
     };
 
   println!("{}", solution);
