@@ -1,39 +1,49 @@
 include Math
 
-def follow_instructions(input)
-  seq = input.split(', ')
-
-  # start facing north at the origin
-  dir = -PI/2
-  locations = [[0,0]]
-  seq.each.with_object(locations) do |step, locations|
-    /(?<turn>\w)(?<blocks>\d+)/ =~ step
-
-    case turn
-    when ?R
-      dir += PI/2
-    when ?L
-      dir -= PI/2
-    else
-      raise "unexpected turn: #{turn}"
-    end
-
-    blocks.to_i.times do
-      location = locations.last
-      x = location[0] + cos(dir).to_i
-      y = location[1] + sin(dir).to_i
-      locations << [x, y]
-    end
+Instruction = Struct.new(:direction, :blocks) do
+  def initialize(direction, blocks)
+    super(direction, blocks.to_i)
   end
-
-  locations
 end
 
-def first_dupe(ary)
-  seen = Set.new
-  ary.find { |elem|
-    seen.include?(elem) || (seen << elem && false)
-  }
+Turtle = Struct.new(:orientation, :location) do
+  def self.run(input)
+    instructions = parse(input)
+    turtles = [Turtle.new(-PI/2, [0,0])]
+
+    instructions.each.with_object(turtles) do |instruction, turtles|
+      turtles << turtles.last.turn(instruction.direction).step
+      (instruction.blocks - 1).times do
+        turtles << turtles.last.step
+      end
+    end
+
+    turtles
+  end
+
+  def self.parse(input)
+    input.split(', ').map {|step|
+      Instruction.new(*step.scan(/(?<turn>\w)(?<blocks>\d+)/)[0])
+    }
+  end
+
+  def turn(direction)
+    angle = case direction
+            when ?R
+              PI/2
+            when ?L
+              -PI/2
+            else
+              raise "unexpected direction: #{direction}"
+            end
+    Turtle.new(orientation + angle, location)
+  end
+
+  def step
+    x = location[0] + cos(orientation).to_i
+    y = location[1] + sin(orientation).to_i
+    Turtle.new(orientation, [x, y])
+  end
 end
 
 require 'minitest'
@@ -45,23 +55,17 @@ class TestInstructions < Minitest::Test
     assert_distance 12, 'R5, L5, R5, R3'
   end
 
-  def test_first_dupe
-    assert_equal 1, first_dupe([1, 2, 3, 1])
-    assert_equal 2, first_dupe([1, 2, 3, 2])
-    assert_equal 3, first_dupe([1, 2, 3, 3])
-
-    locations = follow_instructions('R8, R4, R4, R8')
-    assert_equal [4, 0], first_dupe(locations)
-  end
-
   def assert_distance(expected, instructions)
-    locations = follow_instructions(instructions)
-    assert_equal expected, locations.last.map(&:abs).inject(:+)
+    assert_equal expected, Turtle.run(instructions).last.location.map(&:abs).inject(:+)
   end
 end
 
 if __FILE__ == $0
-  puts first_dupe(follow_instructions(DATA.read))
+  turtles = Turtle.run(DATA.read)
+  p turtles.last
+
+  locations = turtles.map(&:location)
+  p locations.find {|location| locations.count(location) > 1 }
 end
 
 __END__
