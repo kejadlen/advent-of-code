@@ -1,10 +1,14 @@
 class Keypad
-  MAP = (1..9).each_slice(3).to_a
+  MAP = [%w[ . . 1 . . ],
+         %w[ . 2 3 4 . ],
+         %w[ 5 6 7 8 9 ],
+         %w[ . A B C . ],
+         %w[ . . D . . ]]
 
   attr_reader :x, :y
 
   def initialize
-    @x, @y = 1, 1
+    @x, @y = 0, 2
   end
 
   def button
@@ -24,11 +28,13 @@ class Keypad
             else
               raise "unexpected direction: '#{dir}'"
             end
-    @x += delta[0]
-    @y -= delta[1]
+    next_x = x + delta[0]
+    next_y = y - delta[1]
 
-    @x = [[2, x].min, 0].max
-    @y = [[2, y].min, 0].max
+    next_x = [[4, next_x].min, 0].max
+    next_y = [[4, next_y].min, 0].max
+
+    @x, @y = next_x, next_y if MAP[next_y][next_x] != ?.
   end
 end
 
@@ -49,27 +55,27 @@ require 'minitest'
 class TestDay2 < Minitest::Test
   def test_day2
     keypad = Keypad.new
-    assert_equal 5, keypad.button
+    assert_equal ?5, keypad.button
 
     'ULL'.chars.each do |char|
       keypad << char
     end
-    assert_equal 1, keypad.button
+    assert_equal ?5, keypad.button
 
     'RRDDD'.chars.each do |char|
       keypad << char
     end
-    assert_equal 9, keypad.button
+    assert_equal ?D, keypad.button
 
     'LURDL'.chars.each do |char|
       keypad << char
     end
-    assert_equal 8, keypad.button
+    assert_equal ?B, keypad.button
 
     'UUUUD'.chars.each do |char|
       keypad << char
     end
-    assert_equal 5, keypad.button
+    assert_equal ?3, keypad.button
   end
 end
 
