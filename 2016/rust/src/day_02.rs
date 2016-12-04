@@ -74,7 +74,7 @@ impl Keypad {
 
   fn button(&self) -> char {
     let (x, y) = self.current;
-    self.arrangement[y][x].unwrap().clone()
+    self.arrangement[y][x].unwrap()
   }
 
   fn button_at(&self, x: usize, y: usize) -> Option<char> {
