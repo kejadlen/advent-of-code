@@ -17,6 +17,25 @@ class Room
       .map(&:first)
       .join
   end
+
+  def name
+    name = encrypted_name.chars
+    sector_id.times do
+      name = name.map {|char|
+        case char
+        when /[a-y]/
+          char.succ
+        when ?z
+          ?a
+        when ?-, ' '
+          ' '
+        else
+          raise "unexpected char: '#{char.inspect}'"
+        end
+      }
+    end
+    name.join
+  end
 end
 
 if __FILE__ == $0
@@ -25,11 +44,9 @@ if __FILE__ == $0
     room = Room.new(name, sector_id.to_i)
     [room, checksum]
   }.select {|room, checksum|
-    room.checksum == checksum
-  }.inject(0) {|n, (room, _)|
-    n += room.sector_id
-  }.tap {|count|
-    puts count
+    room.checksum == checksum && room.name =~ /north/
+  }.tap {|rooms|
+    p rooms
   }
 end
 
@@ -42,6 +59,8 @@ class TestDay04 < Minitest::Test
     assert_equal 'abcde', Room.new('a-b-c-d-e-f-g-h', 987).checksum
     assert_equal 'oarel', Room.new('not-a-real-room', 404).checksum
     refute_equal 'decoy', Room.new('totally-real-room', 200).checksum
+
+    assert_equal 'very encrypted name', Room.new('qzmt-zixmtkozy-ivhz', 343).name
   end
 end
 
