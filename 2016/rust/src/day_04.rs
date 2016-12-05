@@ -1,3 +1,4 @@
+use std::char;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -15,12 +16,12 @@ pub fn solve(input: &str) -> Result<String> {
       Room::new(room).map(|room| (room, checksum.into()))
     })
     .collect::<Result<_>>()?;
-  let real_rooms = rooms.iter()
-    .filter(|&&(ref room, ref checksum)| room.checksum() == *checksum);
-  let sector_ids = real_rooms.map(|&(ref room, _)| room.sector_id);
-  let sum: usize = sector_ids.sum();
+  let mut real_rooms = rooms.iter()
+    .filter(|&&(ref room, ref checksum)| room.checksum() == *checksum)
+    .map(|&(ref room, _)| room);
+  let room = real_rooms.find(|room| room.name().contains("north")).ok_or("")?;
 
-  Ok(sum.to_string())
+  Ok(room.sector_id.to_string())
 }
 
 #[test]
@@ -59,6 +60,19 @@ impl Room {
 
     counts.iter().take(5).map(|x| *x.0).collect()
   }
+
+  fn name(&self) -> String {
+    self.encrypted_name.chars().map(|c| {
+      match c {
+        '-' => ' ',
+        c => {
+          let digit = c.to_digit(36).unwrap() - 10;
+          let shifted = (digit + self.sector_id as u32) % 26;
+          char::from_digit(shifted + 10, 36).unwrap()
+        },
+      }
+    }).collect()
+  }
 }
 
 #[test]
@@ -81,4 +95,10 @@ fn test_checksum() {
 
   let room = Room::new("totally-real-room-200").unwrap();
   assert_ne!(room.checksum(), "decoy".to_string());
+}
+
+#[test]
+fn test_name() {
+  let room = Room::new("qzmt-zixmtkozy-ivhz-343").unwrap();
+  assert_eq!(room.name(), "very encrypted name");
 }
