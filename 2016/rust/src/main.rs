@@ -10,7 +10,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).ok();
 
-    let solution = day_05::solve(&input)?;
+    let solution = day_06::solve(&input)?;
     println!("{}", solution);
 
     Ok(())
