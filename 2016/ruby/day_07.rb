@@ -3,12 +3,22 @@ def abba?(s)
 end
 
 def tls?(s)
-  hypernets, s = s.split(/\[|\]/).inject([[],[]]) {|n,x| n[0] << x; [n[1], n[0]]}
-  s.any? {|x| abba?(x) } && hypernets.none? {|x| abba?(x) }
+  hypernets, supernets = s.split(/\[|\]/).inject([[],[]]) {|n,x| n[0] << x; [n[1], n[0]]}
+  supernets.any? {|x| abba?(x) } && hypernets.none? {|x| abba?(x) }
+end
+
+def abas(s)
+  s.chars.each_cons(3).select {|a,b,c| (a != b) && (a == c) }
+end
+
+def ssl?(s)
+  hypernets, supernets = s.split(/\[|\]/).inject([[],[]]) {|n,x| n[0] << x; [n[1], n[0]]}
+  abas = supernets.flat_map {|supernet| abas(supernet)}
+  hypernets.any? {|hypernet| abas.any? {|a,b,_| hypernet.include?("#{b}#{a}#{b}") }}
 end
 
 if __FILE__ == $0
-  p DATA.each_line.count {|line| tls?(line) }
+  p DATA.each_line.count {|line| ssl?(line) }
 end
 
 require 'minitest'
