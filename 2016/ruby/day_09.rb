@@ -16,8 +16,26 @@ def decompress(input)
   output
 end
 
+def decompressed_length(input)
+  length = 0
+  ss = StringScanner.new(input)
+  until ss.eos?
+    case
+    when ss.scan(/\((\d+)x(\d+)\)/)
+      times = ss[2].to_i
+      seq = ss.scan(/.{#{ss[1].to_i}}/)
+      length += times * decompressed_length(seq)
+    when ss.scan(/[^(]+/)
+      length += ss.matched.length
+    else
+      raise 'omg!'
+    end
+  end
+  length
+end
+
 if __FILE__ == $0
-  puts decompress(DATA.read.chomp).length
+  puts decompressed_length(DATA.read.chomp)
 end
 
 require 'minitest'
@@ -31,6 +49,14 @@ class TestDecompress < Minitest::Test
     assert_equal 'ABCBCDEFEFG', decompress('A(2x2)BCD(2x2)EFG')
     assert_equal '(1x3)A', decompress('(6x1)(1x3)A')
     assert_equal 'X(3x3)ABC(3x3)ABCY', decompress('X(8x2)(3x3)ABCY')
+  end
+
+  def test_decompressed_length
+    assert_equal 9, decompressed_length('(3x3)XYZ')
+    assert_equal 20, decompressed_length('X(8x2)(3x3)ABCY')
+    assert_equal 241920, decompressed_length('(27x12)(20x12)(13x14)(7x10)(1x12)A')
+    input = '(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN'
+    assert_equal 445, decompressed_length(input)
   end
 end
 
