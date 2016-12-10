@@ -81,9 +81,7 @@ if __FILE__ == $0
     factory << line
   end
 
-  p factory.bots.find {|id, bot|
-    bot.log.include?([17, 61])
-  }.first
+  p factory.bins.values_at(0, 1, 2).map(&:value).inject(:*)
 end
 
 require 'minitest'
