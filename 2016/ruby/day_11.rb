@@ -1,18 +1,44 @@
 require 'delegate'
 
-class State
-  attr_reader :floors, :elevator
-
-  def initialize(input)
-    @floors = input.lines.reverse.map.with_index {|line, index|
+State = Struct.new(:floors, :elevator) do
+  def self.from_s(input)
+    elevator = nil
+    floors = input.lines.reverse.map.with_index {|line, index|
       _, e, *items = line.split(/\s+/)
-      @elevator = index if e == ?E
+      elevator = index if e == ?E
       Floor.new(items.reject {|item| item == ?. })
     }
+    new(floors, elevator)
   end
 
   def ==(state)
     elevator == state.elevator && floors.zip(state.floors).all? {|a,b| a == b }
+  end
+
+  def candidates
+    [-1, 1].flat_map {|delta|
+      next_floor = elevator + delta
+      next [] unless (0...floors.size).cover?(next_floor)
+
+      current_floor.map {|item| move(item, elevator, next_floor) }
+    }
+  end
+
+  private
+
+  def current_floor
+    floors[elevator]
+  end
+
+  def move(item, from, to)
+    from_floor = floors[from] - [item]
+    to_floor = floors[to] + [item]
+
+    floors = self.floors.clone
+    floors[from] = from_floor
+    floors[to] = to_floor
+
+    self.class.new(floors, to)
   end
 end
 
@@ -43,7 +69,7 @@ F1 E  .  HM .  LM
   INPUT
 
   def setup
-    @state = State.new(INPUT)
+    @state = State.from_s(INPUT)
   end
 
   def test_initialize
@@ -57,7 +83,22 @@ F1 E  .  HM .  LM
   end
 
   def test_equality
-    state = State.new(INPUT)
+    state = State.from_s(INPUT)
     assert_equal @state, state
+  end
+
+  def test_candidates
+    candidates = @state.candidates
+    assert_equal 2, candidates.size
+
+    candidate = candidates[0]
+    assert_equal 1, candidate.elevator
+    assert_equal %W[ LM ], candidate.floors[0]
+    assert_equal %W[ HG HM ], candidate.floors[1]
+
+    candidate = candidates[1]
+    assert_equal 1, candidate.elevator
+    assert_equal %W[ HM ], candidate.floors[0]
+    assert_equal %W[ HG LM ], candidate.floors[1]
   end
 end
