@@ -10,6 +10,10 @@ class State
       Floor.new(items.reject {|item| item == ?. })
     }
   end
+
+  def ==(state)
+    elevator == state.elevator && floors.zip(state.floors).all? {|a,b| a == b }
+  end
 end
 
 class Floor < SimpleDelegator
@@ -50,5 +54,10 @@ F1 E  .  HM .  LM
     assert_equal 2, floor.size
     assert_equal %w[ H L ], floor.microchips
     assert_empty floor.generators
+  end
+
+  def test_equality
+    state = State.new(INPUT)
+    assert_equal @state, state
   end
 end
