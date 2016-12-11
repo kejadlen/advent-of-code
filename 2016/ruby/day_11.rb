@@ -16,7 +16,7 @@ State = Struct.new(:floors, :elevator) do
   end
 
   def eql?(state)
-    elevator == state.elevator && floors.zip(state.floors).all? {|a,b| a == b }
+    elevator == state.elevator && floors.zip(state.floors).all? {|a,b| a.eql?(b) }
   end
 
   def candidates
@@ -72,12 +72,24 @@ class Floor < SimpleDelegator
     source.select {|item| item.end_with?(?G) }.map {|item| item.chomp(?G) }
   end
 
+  def shielded
+    microchips & generators
+  end
+
   def irradiated?
     !(generators.empty? || (microchips - generators).empty?)
   end
 
-  def ==(floor)
-    source == floor.source
+  def hash
+    id.hash
+  end
+
+  def eql?(floor)
+    id == floor.id
+  end
+
+  def id
+    [shielded.size, (microchips - shielded).size, (generators - shielded).size]
   end
 end
 
@@ -86,7 +98,7 @@ if __FILE__ == $0
 F4 .
 F3 .  CoM CuM RM PlM
 F2 .  CoG CuG RG PlG
-F1 E  PrG PrM
+F1 E  PrG PrM EG EM DG DM
   INPUT
 
   Step = Struct.new(:state, :count)
@@ -143,10 +155,20 @@ F1 E  .  HM .  LM
   end
 
   def test_equality
-    state = State.from_s(INPUT)
+    state = State.from_s(<<-INPUT)
+F4 .  .  .  .  .
+F3 .  .  .  HG .
+F2 .  LG .  .  .
+F1 E  .  HM .  LM
+  INPUT
     assert_equal @state, state
     assert_equal @state.hash, state.hash
     assert @state.eql?(state)
+
+    set = Set.new
+    set << @state
+    assert_includes set, @state
+    assert_includes set, state
   end
 
   def test_candidates
