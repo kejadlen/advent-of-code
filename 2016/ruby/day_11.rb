@@ -12,6 +12,10 @@ State = Struct.new(:floors, :elevator) do
   end
 
   def ==(state)
+    eql?(state)
+  end
+
+  def eql?(state)
     elevator == state.elevator && floors.zip(state.floors).all? {|a,b| a == b }
   end
 
@@ -20,12 +24,19 @@ State = Struct.new(:floors, :elevator) do
       next_floor = elevator + delta
       next [] unless (0...floors.size).cover?(next_floor)
 
-      current_floor.map {|item| move(item, elevator, next_floor) }
+      elevator_items = [1, 2].flat_map {|n| current_floor.to_a.combination(n).to_a }
+      elevator_items.map {|items| move(items, elevator, next_floor) }
     }
   end
 
   def irradiated?
     floors.any?(&:irradiated?)
+  end
+
+  def to_s
+    floors.map.with_index {|floor, index|
+      "#{elevator == index ??E:?.} #{floor.inspect}"
+    }.reverse.join("\n")
   end
 
   private
@@ -34,9 +45,9 @@ State = Struct.new(:floors, :elevator) do
     floors[elevator]
   end
 
-  def move(item, from, to)
-    from_floor = floors[from] - [item]
-    to_floor = floors[to] + [item]
+  def move(items, from, to)
+    from_floor = Floor.new(floors[from] - items)
+    to_floor = Floor.new(floors[to] + items)
 
     floors = self.floors.clone
     floors[from] = from_floor
@@ -50,7 +61,7 @@ class Floor < SimpleDelegator
   attr_reader :source
 
   def initialize(items)
-    @source = super(items)
+    @source = super(Set.new(items))
   end
 
   def microchips
@@ -63,6 +74,44 @@ class Floor < SimpleDelegator
 
   def irradiated?
     !(generators.empty? || (microchips - generators).empty?)
+  end
+
+  def ==(floor)
+    source == floor.source
+  end
+end
+
+if __FILE__ == $0
+  INPUT = <<-INPUT
+F4 .  .  .  .  .
+F3 .  .  .  LG .
+F2 .  HG .  .  .
+F1 E  .  HM .  LM
+  INPUT
+
+  Step = Struct.new(:state, :count)
+  seen = Set.new
+  steps = [Step.new(State.from_s(INPUT), 0)]
+
+  until steps.empty? do
+    step = steps.shift
+
+    puts
+    puts "Steps: #{step.count}"
+    puts step.state
+
+    if step.state.floors[0..-2].all?(&:empty?)
+      exit
+    end
+
+    step.state.candidates.each do |candidate|
+      next if seen.include?(candidate)
+
+      seen << candidate
+      next if candidate.irradiated?
+
+      steps << Step.new(candidate, step.count + 1)
+    end
   end
 end
 
@@ -93,21 +142,28 @@ F1 E  .  HM .  LM
   def test_equality
     state = State.from_s(INPUT)
     assert_equal @state, state
+    assert_equal @state.hash, state.hash
+    assert @state.eql?(state)
   end
 
   def test_candidates
     candidates = @state.candidates
-    assert_equal 2, candidates.size
+    assert_equal 3, candidates.size
 
     candidate = candidates[0]
     assert_equal 1, candidate.elevator
-    assert_equal %W[ LM ], candidate.floors[0]
-    assert_equal %W[ HG HM ], candidate.floors[1]
+    assert_equal %W[ LM ], candidate.floors[0].to_a
+    assert_equal %W[ HG HM ], candidate.floors[1].to_a
 
     candidate = candidates[1]
     assert_equal 1, candidate.elevator
-    assert_equal %W[ HM ], candidate.floors[0]
-    assert_equal %W[ HG LM ], candidate.floors[1]
+    assert_equal %W[ HM ], candidate.floors[0].to_a
+    assert_equal %W[ HG LM ], candidate.floors[1].to_a
+
+    candidate = candidates[2]
+    assert_equal 1, candidate.elevator
+    assert_empty candidate.floors[0]
+    assert_equal %W[ HG HM LM ], candidate.floors[1].to_a
   end
 
   def test_irradiated
