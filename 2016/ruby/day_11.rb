@@ -24,6 +24,10 @@ State = Struct.new(:floors, :elevator) do
     }
   end
 
+  def irradiated?
+    floors.any?(&:irradiated?)
+  end
+
   private
 
   def current_floor
@@ -55,6 +59,10 @@ class Floor < SimpleDelegator
 
   def generators
     source.select {|item| item.end_with?(?G) }.map {|item| item.chomp(?G) }
+  end
+
+  def irradiated?
+    !(generators.empty? || (microchips - generators).empty?)
   end
 end
 
@@ -100,5 +108,15 @@ F1 E  .  HM .  LM
     assert_equal 1, candidate.elevator
     assert_equal %W[ HM ], candidate.floors[0]
     assert_equal %W[ HG LM ], candidate.floors[1]
+  end
+
+  def test_irradiated
+    refute Floor.new(%w[]).irradiated?
+    refute Floor.new(%w[ BM ]).irradiated?
+    refute Floor.new(%w[ BG ]).irradiated?
+    refute Floor.new(%w[ BM BG ]).irradiated?
+    refute Floor.new(%w[ BM BG LG ]).irradiated?
+
+    assert Floor.new(%w[ BM LG ]).irradiated?
   end
 end
