@@ -83,10 +83,10 @@ end
 
 if __FILE__ == $0
   INPUT = <<-INPUT
-F4 .  .  .  .  .
-F3 .  .  .  LG .
-F2 .  HG .  .  .
-F1 E  .  HM .  LM
+F4 .
+F3 .  CoM CuM RM PlM
+F2 .  CoG CuG RG PlG
+F1 E  PrG PrM
   INPUT
 
   Step = Struct.new(:state, :count)
@@ -96,11 +96,14 @@ F1 E  .  HM .  LM
   until steps.empty? do
     step = steps.shift
 
-    puts
-    puts "Steps: #{step.count}"
-    puts step.state
+    # puts
+    # puts "Steps: #{step.count}"
+    # puts step.state
 
     if step.state.floors[0..-2].all?(&:empty?)
+      puts
+      puts "Steps: #{step.count}"
+      puts step.state
       exit
     end
 
