@@ -1,4 +1,4 @@
-registers = Hash[(?a..?d).map {|c| [c, 0] }]
+registers = { ?a => 0, ?b => 0, ?c => 1, ?d => 0 }
 pc = 0
 data = DATA.each_line.to_a
 
