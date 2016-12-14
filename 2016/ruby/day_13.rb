@@ -53,7 +53,7 @@ end
 
 if __FILE__ == $0
   maze = Maze.new(1358)
-  p maze.solve([1,1]).walk.find {|pos,_| pos == [31,39] }
+  p maze.solve([1,1]).walk.take_while {|pos,count| count < 51 }.map(&:first).uniq.size
 end
 
 require 'minitest'
