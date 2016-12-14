@@ -5,7 +5,13 @@ class Keys
 
   def initialize(seed)
     @seed = seed
-    @hash = Hash.new {|h,k| Digest::MD5.hexdigest("#{seed}#{k}") }
+    @hash = Hash.new {|h,k|
+      hash = Digest::MD5.hexdigest("#{seed}#{k}")
+      2016.times do
+        hash = Digest::MD5.hexdigest(hash)
+      end
+      h[k] = hash
+    }
   end
 
   def each
@@ -24,4 +30,4 @@ class Keys
 end
 
 keys = Keys.new('qzyelonm')
-p keys.each.take(64)
+p keys.each.take(64).last
