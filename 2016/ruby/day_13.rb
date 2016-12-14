@@ -12,26 +12,40 @@ class Maze
     walls[[x, y]]
   end
 
-  def solve(from, to)
-    seen = Set.new
-    current = [[from, 0]]
-    loop do
-      pos, count = current.shift
-      seen << pos
-      x,y = pos
+  def solve(start)
+    Solver.new(self, start)
+  end
 
-      [[1,0], [-1,0], [0,1], [0,-1]].map {|dx, dy|
-        [x + dx, y + dy]
-      }.reject {|x,y|
-        x.negative? || y.negative?
-      }.reject {|x,y|
-        walls[[x,y]]
-      }.reject {|x,y|
-        seen.include?([x,y])
-      }.each do |x,y|
-        return count + 1 if to == [x,y]
+  class Solver
+    attr_reader :maze, :seen, :current
 
-        current << [[x,y], count + 1]
+    def initialize(maze, start)
+      @maze = maze
+      @seen = Set.new
+      @current = [[start, 0]]
+    end
+
+    def walk
+      return enum_for(__method__) unless block_given?
+
+      loop do
+        pos, count = current.shift
+        seen << pos
+        x,y = pos
+
+        [[1,0], [-1,0], [0,1], [0,-1]].map {|dx, dy|
+          [x + dx, y + dy]
+        }.reject {|x,y|
+          x.negative? || y.negative?
+        }.reject {|x,y|
+          maze[x,y]
+        }.reject {|pos|
+          seen.include?(pos)
+        }.each do |pos|
+          current << [pos, count + 1]
+        end
+
+        yield [pos, count]
       end
     end
   end
@@ -39,7 +53,7 @@ end
 
 if __FILE__ == $0
   maze = Maze.new(1358)
-  puts maze.solve([1,1], [31,39])
+  p maze.solve([1,1]).walk.find {|pos,_| pos == [31,39] }
 end
 
 require 'minitest'
