@@ -13,7 +13,7 @@ def checksum(data)
 end
 
 seed = '10001110011110000'
-target_length = 272
+target_length = 35651584
 
 state = seed
 while state.length < target_length
