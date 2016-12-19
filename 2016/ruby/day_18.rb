@@ -24,7 +24,17 @@ Row = Struct.new(:tiles) do
   end
 end
 
-require 'minitest/autorun'
+if __FILE__ == $0
+  row = Row.from_s(DATA.read.chomp)
+  rows = [row]
+  while rows.size < 40
+    rows << rows.last.next
+  end
+  p rows.map {|row| row.tiles.count(:safe) }.inject(:+)
+end
+
+require 'minitest'
+# require 'minitest/autorun'
 
 class TestRow < Minitest::Test
   def test_row
@@ -34,3 +44,6 @@ class TestRow < Minitest::Test
     assert_equal Row.from_s('.^^^^'), row.next
   end
 end
+
+__END__
+^^.^..^.....^..^..^^...^^.^....^^^.^.^^....^.^^^...^^^^.^^^^.^..^^^^.^^.^.^.^.^.^^...^^..^^^..^.^^^^
