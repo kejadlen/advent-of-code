@@ -26,11 +26,12 @@ end
 
 if __FILE__ == $0
   row = Row.from_s(DATA.read.chomp)
-  rows = [row]
-  while rows.size < 40
-    rows << rows.last.next
+  count = 0
+  400_000.times do
+    count += row.tiles.count(:safe)
+    row = row.next
   end
-  p rows.map {|row| row.tiles.count(:safe) }.inject(:+)
+  p count
 end
 
 require 'minitest'
