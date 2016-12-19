@@ -11,6 +11,8 @@ Maze = Struct.new(:passcode, :size) do
       state = states.shift
       yield state
 
+      next if state.location == [3,3]
+
       hash = Digest::MD5.hexdigest("#{passcode}#{state.path}")[0,4]
       open_doors = %i[ U D L R ].select.with_index {|_, index|
         'bcdef'.include?(hash[index])
@@ -39,6 +41,6 @@ Maze = Struct.new(:passcode, :size) do
   end
 end
 
-p Maze.new('yjjvjgan', 4).walk.find {|state|
+p Maze.new('yjjvjgan', 4).walk.select {|state|
   state.location == [3, 3]
-}
+}.map(&:path).map(&:length).max
