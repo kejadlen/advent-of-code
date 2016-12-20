@@ -1,16 +1,35 @@
-Elf = Struct.new(:id, :presents)
+def solve(n, debug: false)
+  elves = Array.new(n) {|i| i+1 }
 
-n = 3017957
-elves = Array.new(n) {|i| Elf.new(i+1, 1) }
+  until elves.size == 1
+    across = elves.size / 2
+    elves.delete_at(across)
+    elves.rotate!
+  end
 
-until elves.size == 1
-  elf = elves.shift
-  next if elf.presents.zero?
-
-  elf.presents += elves.first.presents
-  elves.first.presents = 0
-
-  elves << elf
+  elves.first
 end
 
-p elves
+# This takes too long
+# n = 3017957
+# puts solve(n)
+
+# So instead use this to find the pattern!
+(1..100).each do |i|
+  puts "#{i}: #{solve(i)}"
+end
+
+# At 3**n, the counter resets
+# At 2*3**n, the counter goes up by two instead of one
+include Math
+def formula(n)
+  x = log(n, 3).to_i
+  a = 3**x
+  b = 2*a
+
+  (n == a) ? a : n - a + [(n - b), 0].max
+end
+
+(1..100).each do |n|
+  puts "#{n}: #{solve(n)} #{formula(n)}"
+end
