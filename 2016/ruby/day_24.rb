@@ -96,6 +96,7 @@ if __FILE__ == $0
     .map(&:first)
     .permutation
     .select {|route| route[0] == 0 }
+    .map {|route| route + [0] }
     .map {|route|
       [route, route.each_cons(2).map {|a,b| hash[[a,b]] }.inject(:+)]
     }.sort_by(&:last)
