@@ -11,6 +11,10 @@ class Solver
     loop do
       location = current[0]
       break if location == to
+      if seen.include?(location)
+        current = queue.shift
+        next
+      end
 
       seen << location
 
@@ -95,6 +99,7 @@ if __FILE__ == $0
     .map {|route|
       [route, route.each_cons(2).map {|a,b| hash[[a,b]] }.inject(:+)]
     }.sort_by(&:last)
+    .first
 end
 
 require 'minitest'
