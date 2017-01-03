@@ -6,7 +6,7 @@ pub fn solve(input: &str) -> Result<String> {
   let mut counters = HashMap::new();
   for line in input.lines() {
     for (i, c) in line.chars().enumerate() {
-      let mut col = counters.entry(i).or_insert_with(|| HashMap::new());
+      let mut col = counters.entry(i).or_insert_with(HashMap::new);
       *col.entry(c).or_insert(0) += 1
     }
   }

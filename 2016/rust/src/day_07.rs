@@ -67,7 +67,7 @@ impl IP7 {
     let v: Vec<_> = s.chars().collect();
     v.windows(3)
       .filter(|w| (w[0] != w[1]) && (w[0] == w[2]))
-      .map(|w| w.iter().map(|&x| x).collect())
+      .map(|w| w.iter().cloned().collect())
       .collect()
   }
 }
