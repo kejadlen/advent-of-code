@@ -18,7 +18,7 @@ enum Register {
 
 enum Variable {
     Register(Register),
-    Value(usize),
+    Value(isize),
 }
 
 #[derive(Debug, PartialEq)]
@@ -33,7 +33,7 @@ impl State {
             &Variable::Register(ref r) => {
                 self.registers.get(r).cloned().unwrap_or(0 as isize)
             }
-            &Variable::Value(value) => value as isize,
+            &Variable::Value(value) => value,
         }
     }
 }
@@ -58,12 +58,30 @@ impl Copy {
 }
 
 // inc x increases the value of register x by one.
+struct Increment {
+    register: Register,
+}
+
+impl Increment {
+    fn run(&self, state: &State) -> State {
+        let pc = state.pc + 1;
+        let mut registers = state.registers.clone();
+        let register = self.register.clone();
+        let value = state.value(&Variable::Register(self.register.clone())) + 1;
+        registers.insert(register, value);
+        State {
+            pc: pc,
+            registers: registers,
+        }
+    }
+}
+
 // dec x decreases the value of register x by one.
 // jnz x y jumps to an instruction y away (positive means forward; negative means backward), but only if x is not zero.
 
 #[cfg(test)]
 mod tests {
-    use super::{Variable, Register, State, Copy};
+    use super::{Variable, Register, State, Copy, Increment};
 
     #[test]
     fn test_state_value() {
@@ -94,5 +112,20 @@ mod tests {
         };
 
         assert_eq!(copy.run(&state), expected);
+    }
+
+    #[test]
+    fn test_increment() {
+        let increment = Increment { register: Register::A };
+        let state = State {
+            pc: 0,
+            registers: vec![(Register::A, 41)].into_iter().collect(),
+        };
+        let expected = State {
+            pc: 1,
+            registers: vec![(Register::A, 42)].into_iter().collect(),
+        };
+
+        assert_eq!(increment.run(&state), expected);
     }
 }
