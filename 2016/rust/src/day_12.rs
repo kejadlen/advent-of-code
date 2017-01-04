@@ -8,7 +8,7 @@ pub fn solve(input: &str) -> Result<String> {
 
 // The assembunny code you've extracted operates on four registers (a, b, c, and d) that start at 0
 // and can hold any integer. However, it seems to make use of only a few instructions:
-#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 enum Register {
     A,
     B,
@@ -16,9 +16,22 @@ enum Register {
     D,
 }
 
+#[derive(Clone, Copy)]
 enum Variable {
     Register(Register),
     Value(isize),
+}
+
+impl From<Register> for Variable {
+    fn from(r: Register) -> Self {
+        Variable::Register(r)
+    }
+}
+
+impl From<isize> for Variable {
+    fn from(i: isize) -> Self {
+        Variable::Value(i)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -28,12 +41,12 @@ struct State {
 }
 
 impl State {
-    fn value(&self, v: &Variable) -> isize {
+    fn value(&self, v: Variable) -> isize {
         match v {
-            &Variable::Register(ref r) => {
+            Variable::Register(ref r) => {
                 self.registers.get(r).cloned().unwrap_or(0 as isize)
             }
-            &Variable::Value(value) => value,
+            Variable::Value(value) => value,
         }
     }
 }
@@ -47,9 +60,9 @@ struct Copy {
 impl Copy {
     fn run(&self, state: &State) -> State {
         let pc = state.pc + 1;
-        let value = state.value(&self.variable);
         let mut registers = state.registers.clone();
-        registers.insert(self.register.clone(), value);
+        let value = state.value(self.variable);
+        registers.insert(self.register, value);
         State {
             pc: pc,
             registers: registers,
@@ -66,9 +79,8 @@ impl Increment {
     fn run(&self, state: &State) -> State {
         let pc = state.pc + 1;
         let mut registers = state.registers.clone();
-        let register = self.register.clone();
-        let value = state.value(&Variable::Register(self.register.clone())) + 1;
-        registers.insert(register, value);
+        let value = state.value(self.register.into()) + 1;
+        registers.insert(self.register, value);
         State {
             pc: pc,
             registers: registers,
@@ -89,9 +101,9 @@ mod tests {
             pc: 0,
             registers: vec![(Register::A, 41)].into_iter().collect(),
         };
-        assert_eq!(state.value(&Variable::Register(Register::A)), 41);
-        assert_eq!(state.value(&Variable::Register(Register::B)), 0);
-        assert_eq!(state.value(&Variable::Value(23)), 23);
+        assert_eq!(state.value(Register::A.into()), 41);
+        assert_eq!(state.value(Register::B.into()), 0);
+        assert_eq!(state.value(23.into()), 23);
     }
 
     #[test]
