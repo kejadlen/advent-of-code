@@ -89,11 +89,28 @@ impl Increment {
 }
 
 // dec x decreases the value of register x by one.
+struct Decrement {
+    register: Register,
+}
+
+impl Decrement {
+    fn run(&self, state: &State) -> State {
+        let pc = state.pc + 1;
+        let mut registers = state.registers.clone();
+        let value = state.value(self.register.into()) - 1;
+        registers.insert(self.register, value);
+        State {
+            pc: pc,
+            registers: registers,
+        }
+    }
+}
+
 // jnz x y jumps to an instruction y away (positive means forward; negative means backward), but only if x is not zero.
 
 #[cfg(test)]
 mod tests {
-    use super::{Variable, Register, State, Copy, Increment};
+    use super::{Variable, Register, State, Copy, Increment, Decrement};
 
     #[test]
     fn test_state_value() {
@@ -139,5 +156,20 @@ mod tests {
         };
 
         assert_eq!(increment.run(&state), expected);
+    }
+
+    #[test]
+    fn test_decrement() {
+        let decrement = Decrement { register: Register::A };
+        let state = State {
+            pc: 0,
+            registers: vec![(Register::A, 41)].into_iter().collect(),
+        };
+        let expected = State {
+            pc: 1,
+            registers: vec![(Register::A, 40)].into_iter().collect(),
+        };
+
+        assert_eq!(decrement.run(&state), expected);
     }
 }
