@@ -1,4 +1,4 @@
-#![feature(inclusive_range_syntax)]
+#![feature(field_init_shorthand, inclusive_range_syntax)]
 #![recursion_limit = "1024"]
 
 #[macro_use]
@@ -15,5 +15,6 @@ pub mod day_05;
 pub mod day_06;
 pub mod day_07;
 pub mod day_08;
-pub mod day_09;
+// pub mod day_09;
 // pub mod day_10;
+pub mod day_12;
