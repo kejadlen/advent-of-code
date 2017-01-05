@@ -1,10 +1,11 @@
-#![feature(field_init_shorthand, inclusive_range_syntax)]
+#![feature(alloc_system, field_init_shorthand, inclusive_range_syntax)]
 #![recursion_limit = "1024"]
 
+extern crate alloc_system;
+extern crate crypto;
 #[macro_use]
 extern crate error_chain;
 extern crate regex;
-extern crate crypto;
 
 mod assembunny;
 pub mod errors;

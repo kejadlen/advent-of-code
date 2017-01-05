@@ -7,3 +7,6 @@ authors = ["Alpha Chen <alpha.chen@gmail.com>"]
 error-chain = "0.7"
 regex = "0.1"
 rust-crypto = "0.2"
+
+[profile.release]
+debug = true
