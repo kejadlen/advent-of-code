@@ -6,6 +6,7 @@ extern crate error_chain;
 extern crate regex;
 extern crate crypto;
 
+mod assembunny;
 pub mod errors;
 pub mod day_01;
 pub mod day_02;
