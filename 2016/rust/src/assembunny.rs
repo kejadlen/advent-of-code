@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::ops;
 use std::str;
 
 use errors::*;
 
 pub struct Assembunny {
-    pub registers: HashMap<Register, isize>,
+    pub registers: Registers,
     pub instructions: Instructions,
 }
 
@@ -12,17 +12,16 @@ impl Assembunny {
     fn value<V: Into<Variable>>(&self, v: V) -> isize {
         let v: Variable = v.into();
         match v {
-            Variable::Register(r) => {
-                self.registers.get(&r).cloned().unwrap_or(0)
-            }
+            Variable::Register(r) => self.registers[r],
             Variable::Value(i) => i,
         }
     }
 }
 
 impl Iterator for Assembunny {
-    type Item = HashMap<Register, isize>;
-    fn next(&mut self) -> Option<HashMap<Register, isize>> {
+    type Item = Registers;
+
+    fn next(&mut self) -> Option<Registers> {
         let pc = self.value(Register::PC) as usize;
         let instruction = match self.instructions.0.get(pc) {
             Some(i) => i,
@@ -34,21 +33,21 @@ impl Iterator for Assembunny {
         match *instruction {
             Instruction::Cpy(v, r) => {
                 let value = self.value(v);
-                self.registers.insert(r, value);
-                *self.registers.entry(Register::PC).or_insert(0) += 1;
+                self.registers[r] = value;
+                self.registers[Register::PC] += 1;
             }
             Instruction::Inc(r) => {
-                *self.registers.entry(r).or_insert(0) += 1;
-                *self.registers.entry(Register::PC).or_insert(0) += 1;
+                self.registers[r] += 1;
+                self.registers[Register::PC] += 1;
             }
             Instruction::Dec(r) => {
-                *self.registers.entry(r).or_insert(0) -= 1;
-                *self.registers.entry(Register::PC).or_insert(0) += 1;
+                self.registers[r] -= 1;
+                self.registers[Register::PC] += 1;
             }
             Instruction::Jnz(v, i) => {
                 let delta = if self.value(v) == 0 { 1 } else { i };
                 let pc = self.value(Register::PC) + delta;
-                self.registers.insert(Register::PC, pc);
+                self.registers[Register::PC] = pc;
             }
         }
 
@@ -56,7 +55,38 @@ impl Iterator for Assembunny {
     }
 }
 
+#[derive(Clone)]
+pub struct Registers(Vec<isize>);
 pub struct Instructions(Vec<Instruction>);
+
+impl Registers {
+    pub fn new() -> Self {
+        Registers(vec![0; 5])
+    }
+
+    fn index(r: Register) -> usize {
+        match r {
+            Register::PC => 0,
+            Register::A => 1,
+            Register::B => 2,
+            Register::C => 3,
+            Register::D => 4,
+        }
+    }
+}
+
+impl ops::Index<Register> for Registers {
+    type Output = isize;
+
+    fn index(&self, _index: Register) -> &isize {
+        self.0.index(Self::index(_index))
+    }
+}
+impl ops::IndexMut<Register> for Registers {
+    fn index_mut(&mut self, _index: Register) -> &mut isize {
+        self.0.index_mut(Self::index(_index))
+    }
+}
 
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum Register {
@@ -179,8 +209,8 @@ impl<'a> SplitWhitespaceExt for str::SplitWhitespace<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Assembunny, Instructions, Instruction, Register, Variable};
-    use std::collections::HashMap;
+    use super::*;
+    use super::{Instruction, Variable};
     use std::str::FromStr;
 
     #[test]
@@ -194,21 +224,21 @@ dec a"
             .parse()
             .unwrap();
         let mut assembunny = Assembunny {
-            registers: HashMap::new(),
+            registers: Registers::new(),
             instructions: instructions,
         };
 
         let registers = assembunny.next().unwrap();
-        assert_eq!(registers.get(&Register::A), Some(&41));
-        assert_eq!(registers.get(&Register::B), None);
+        assert_eq!(registers[Register::A], 41);
+        assert_eq!(registers[Register::B], 0);
 
         let registers = assembunny.next().unwrap();
-        assert_eq!(registers.get(&Register::A), Some(&42));
-        assert_eq!(registers.get(&Register::C), None);
+        assert_eq!(registers[Register::A], 42);
+        assert_eq!(registers[Register::C], 0);
 
         let registers = assembunny.last().unwrap();
-        assert_eq!(registers.get(&Register::A), Some(&42));
-        assert_eq!(registers.get(&Register::PC), Some(&6));
+        assert_eq!(registers[Register::A], 42);
+        assert_eq!(registers[Register::PC], 6);
     }
 
     #[test]
