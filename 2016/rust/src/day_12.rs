@@ -1,22 +1,119 @@
 use std::collections::HashMap;
+use std::str;
 
 use errors::*;
 
 pub fn solve(input: &str) -> Result<String> {
-    Ok("".into())
+    let instructions: Instructions = input.parse()?;
+    let assembunny = Assembunny::new(instructions);
+    let registers = assembunny.last().ok_or("")?;
+    Ok(format!("{}", registers.get(Register::A)))
 }
 
-// The assembunny code you've extracted operates on four registers (a, b, c, and d) that start at 0
-// and can hold any integer. However, it seems to make use of only a few instructions:
+struct Assembunny {
+    registers: Registers,
+    instructions: Instructions,
+}
+
+impl Assembunny {
+    fn new(instructions: Instructions) -> Self {
+        Assembunny {
+            registers: Registers::new(),
+            instructions: instructions,
+        }
+    }
+
+    fn value<V: Into<Variable>>(&self, v: V) -> isize {
+        let v: Variable = v.into();
+        match v {
+            Variable::Register(r) => self.registers.get(r),
+            Variable::Value(i) => i,
+        }
+    }
+}
+
+impl Iterator for Assembunny {
+    type Item = Registers;
+    fn next(&mut self) -> Option<Registers> {
+        let pc = self.value(Register::PC) as usize;
+        let instruction = match self.instructions.0.get(pc) {
+            Some(i) => i,
+            None => {
+                return None;
+            }
+        };
+
+        match *instruction {
+            Instruction::Cpy(v, r) => {
+                let value = self.value(v);
+                self.registers.set(r, value);
+                self.registers.inc(Register::PC);
+            }
+            Instruction::Inc(r) => {
+                self.registers.inc(r);
+                self.registers.inc(Register::PC);
+            }
+            Instruction::Dec(r) => {
+                self.registers.dec(r);
+                self.registers.inc(Register::PC);
+            }
+            Instruction::Jnz(v, i) => {
+                let delta = if self.value(v) == 0 { 1 } else { i };
+                let pc = self.value(Register::PC) + delta;
+                self.registers.set(Register::PC, pc);
+            }
+        }
+
+        Some(self.registers.clone())
+    }
+}
+
+#[derive(Clone, Debug)]
+struct Registers(HashMap<Register, isize>);
+struct Instructions(Vec<Instruction>);
+
+impl Registers {
+    fn new() -> Self {
+        Registers(HashMap::new())
+    }
+
+    fn get(&self, r: Register) -> isize {
+        self.0.get(&r).cloned().unwrap_or(0)
+    }
+
+    fn set(&mut self, r: Register, i: isize) {
+        self.0.insert(r, i);
+    }
+
+    fn inc(&mut self, r: Register) {
+        let v = self.get(r) + 1;
+        self.set(r, v);
+    }
+
+    fn dec(&mut self, r: Register) {
+        let v = self.get(r) - 1;
+        self.set(r, v);
+    }
+}
+
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 enum Register {
+    PC,
     A,
     B,
     C,
     D,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Instruction {
+    Cpy(Variable, Register),
+    Inc(Register),
+    Dec(Register),
+    Jnz(Variable, isize),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Variable {
     Register(Register),
     Value(isize),
@@ -28,148 +125,153 @@ impl From<Register> for Variable {
     }
 }
 
-impl From<isize> for Variable {
-    fn from(i: isize) -> Self {
-        Variable::Value(i)
+// Parsing
+
+impl str::FromStr for Instructions {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        s.lines()
+            .map(|line| line.parse())
+            .collect::<Result<Vec<_>>>()
+            .map(Instructions)
     }
 }
 
-#[derive(Debug, PartialEq)]
-struct State {
-    pc: usize,
-    registers: HashMap<Register, isize>,
+impl str::FromStr for Register {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "a" => Ok(Register::A),
+            "b" => Ok(Register::B),
+            "c" => Ok(Register::C),
+            "d" => Ok(Register::D),
+            _ => Err(format!("invalid register '{}'", s).into()),
+        }
+    }
 }
 
-impl State {
-    fn value(&self, v: Variable) -> isize {
-        match v {
-            Variable::Register(ref r) => {
-                self.registers.get(r).cloned().unwrap_or(0 as isize)
+impl str::FromStr for Instruction {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        let mut tokens = s.split_whitespace();
+        match tokens.next() {
+            Some("cpy") => {
+                let v = tokens.read_variable()?;
+                let r = tokens.read_register()?;
+                Ok(Instruction::Cpy(v, r))
             }
-            Variable::Value(value) => value,
+            Some("inc") => {
+                let r = tokens.read_register()?;
+                Ok(Instruction::Inc(r))
+            }
+            Some("dec") => {
+                let r = tokens.read_register()?;
+                Ok(Instruction::Dec(r))
+            }
+            Some("jnz") => {
+                let var = tokens.read_variable()?;
+                let val = tokens.read_value()?;
+                Ok(Instruction::Jnz(var, val))
+            }
+            Some(inst) => Err(format!("invalid instruction '{}'", inst).into()),
+            None => Err("no instruction".into()),
         }
     }
 }
 
-// cpy x y copies x (either an integer or the value of a register) into register y.
-struct Copy {
-    variable: Variable,
-    register: Register,
-}
-
-impl Copy {
-    fn run(&self, state: &State) -> State {
-        let pc = state.pc + 1;
-        let mut registers = state.registers.clone();
-        let value = state.value(self.variable);
-        registers.insert(self.register, value);
-        State {
-            pc: pc,
-            registers: registers,
-        }
+impl str::FromStr for Variable {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        s.parse::<Register>()
+            .map(Variable::Register)
+            .or_else(|_| s.parse::<isize>().map(Variable::Value))
+            .map_err(|_| format!("invalid variable '{}'", s).into())
     }
 }
 
-// inc x increases the value of register x by one.
-struct Increment {
-    register: Register,
+trait SplitWhitespaceExt {
+    fn read_variable(&mut self) -> Result<Variable>;
+    fn read_register(&mut self) -> Result<Register>;
+    fn read_value(&mut self) -> Result<isize>;
 }
 
-impl Increment {
-    fn run(&self, state: &State) -> State {
-        let pc = state.pc + 1;
-        let mut registers = state.registers.clone();
-        let value = state.value(self.register.into()) + 1;
-        registers.insert(self.register, value);
-        State {
-            pc: pc,
-            registers: registers,
-        }
+impl<'a> SplitWhitespaceExt for str::SplitWhitespace<'a> {
+    fn read_variable(&mut self) -> Result<Variable> {
+        self.next()
+            .ok_or("missing variable".into())
+            .and_then(|v| v.parse::<Variable>())
+    }
+
+    fn read_register(&mut self) -> Result<Register> {
+        self.next()
+            .ok_or("missing register".into())
+            .and_then(|v| v.parse::<Register>())
+    }
+
+    fn read_value(&mut self) -> Result<isize> {
+        self.next()
+            .ok_or("missing value".into())
+            .and_then(|v| v.parse::<isize>().chain_err(|| ""))
     }
 }
-
-// dec x decreases the value of register x by one.
-struct Decrement {
-    register: Register,
-}
-
-impl Decrement {
-    fn run(&self, state: &State) -> State {
-        let pc = state.pc + 1;
-        let mut registers = state.registers.clone();
-        let value = state.value(self.register.into()) - 1;
-        registers.insert(self.register, value);
-        State {
-            pc: pc,
-            registers: registers,
-        }
-    }
-}
-
-// jnz x y jumps to an instruction y away (positive means forward; negative means backward), but only if x is not zero.
 
 #[cfg(test)]
 mod tests {
-    use super::{Variable, Register, State, Copy, Increment, Decrement};
+    use super::{Assembunny, Instructions, Instruction, Register, Variable};
+    use std::str::FromStr;
 
     #[test]
-    fn test_state_value() {
-        let state = State {
-            pc: 0,
-            registers: vec![(Register::A, 41)].into_iter().collect(),
-        };
-        assert_eq!(state.value(Register::A.into()), 41);
-        assert_eq!(state.value(Register::B.into()), 0);
-        assert_eq!(state.value(23.into()), 23);
+    fn test_assembunny() {
+        let instructions: Instructions = "cpy 41 a
+inc a
+inc a
+dec a
+jnz a 2
+dec a"
+            .parse()
+            .unwrap();
+        let mut assembunny = Assembunny::new(instructions);
+
+        let registers = assembunny.next().unwrap();
+        assert_eq!(registers.get(Register::A), 41);
+        assert_eq!(registers.get(Register::B), 0);
+
+        let registers = assembunny.next().unwrap();
+        assert_eq!(registers.get(Register::A), 42);
+        assert_eq!(registers.get(Register::C), 0);
+
+        let registers = assembunny.last().unwrap();
+        assert_eq!(registers.get(Register::A), 42);
+        assert_eq!(registers.get(Register::PC), 6);
     }
 
     #[test]
-    fn test_copy() {
-        let variable = Variable::Value(41);
-        let register = Register::A;
-        let copy = Copy {
-            variable: variable,
-            register: register,
-        };
-        let state = State {
-            pc: 0,
-            registers: vec![].into_iter().collect(),
-        };
-        let expected = State {
-            pc: 1,
-            registers: vec![(Register::A, 41)].into_iter().collect(),
-        };
-
-        assert_eq!(copy.run(&state), expected);
+    fn test_instructions_from_str() {
+        let i: Instructions = "cpy 41 a
+inc a
+inc a
+dec a
+jnz a 2
+dec a"
+            .parse()
+            .unwrap();
+        assert_eq!(i.0.len(), 6);
+        assert_eq!(i.0[0], Instruction::from_str("cpy 41 a").unwrap());
     }
 
     #[test]
-    fn test_increment() {
-        let increment = Increment { register: Register::A };
-        let state = State {
-            pc: 0,
-            registers: vec![(Register::A, 41)].into_iter().collect(),
-        };
-        let expected = State {
-            pc: 1,
-            registers: vec![(Register::A, 42)].into_iter().collect(),
-        };
+    fn test_instruction_from_str() {
+        assert!(Instruction::from_str("").is_err());
+        assert!(Instruction::from_str("omg").is_err());
+        assert!(Instruction::from_str("inc 5").is_err());
 
-        assert_eq!(increment.run(&state), expected);
-    }
-
-    #[test]
-    fn test_decrement() {
-        let decrement = Decrement { register: Register::A };
-        let state = State {
-            pc: 0,
-            registers: vec![(Register::A, 41)].into_iter().collect(),
-        };
-        let expected = State {
-            pc: 1,
-            registers: vec![(Register::A, 40)].into_iter().collect(),
-        };
-
-        assert_eq!(decrement.run(&state), expected);
+        assert_eq!(Instruction::from_str("cpy 41 a").unwrap(),
+                   Instruction::Cpy(Variable::Value(41), Register::A));
+        assert_eq!(Instruction::from_str("inc a").unwrap(),
+                   Instruction::Inc(Register::A));
+        assert_eq!(Instruction::from_str("dec b").unwrap(),
+                   Instruction::Dec(Register::B));
+        assert_eq!(Instruction::from_str("jnz c 2").unwrap(),
+                   Instruction::Jnz(Variable::Register(Register::C), 2));
     }
 }
