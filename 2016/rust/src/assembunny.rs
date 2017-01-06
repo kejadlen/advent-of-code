@@ -80,11 +80,11 @@ impl Iterator for Assembunny {
 }
 
 #[derive(Clone, Debug)]
-pub struct Registers(Vec<isize>);
+pub struct Registers([isize; 5]);
 
 impl Registers {
     pub fn new() -> Self {
-        Registers(vec![0; 5])
+        Registers([0; 5])
     }
 
     fn index(r: Register) -> usize {
