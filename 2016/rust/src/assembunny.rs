@@ -167,10 +167,10 @@ impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &Instruction::Cpy(a, b) => write!(f, "cpy {} {}", a, b),
-            &Instruction::Inc(a) => write!(f, "cpy {}", a),
-            &Instruction::Dec(a) => write!(f, "cpy {}", a),
-            &Instruction::Jnz(a, b) => write!(f, "cpy {} {}", a, b),
-            &Instruction::Tgl(a) => write!(f, "cpy {}", a),
+            &Instruction::Inc(a) => write!(f, "inc {}", a),
+            &Instruction::Dec(a) => write!(f, "dec {}", a),
+            &Instruction::Jnz(a, b) => write!(f, "jnz {} {}", a, b),
+            &Instruction::Tgl(a) => write!(f, "tgl {}", a),
         }
     }
 }
