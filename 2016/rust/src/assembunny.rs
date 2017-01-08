@@ -10,10 +10,12 @@ pub struct Assembunny {
 }
 
 impl Assembunny {
+    #[inline(never)]
     fn instruction(&self, i: usize) -> Option<Instruction> {
         self.instructions.get(i).cloned()
     }
 
+    #[inline(never)]
     fn value<V: Into<Variable>>(&self, v: V) -> isize {
         let v: Variable = v.into();
         match v {
@@ -22,6 +24,7 @@ impl Assembunny {
         }
     }
 
+    #[inline(never)]
     fn toggle(&mut self, i: usize) {
         let instruction = match self.instruction(i) {
             Some(x) => x,
@@ -42,6 +45,7 @@ impl Assembunny {
 impl Iterator for Assembunny {
     type Item = Registers;
 
+    #[inline(never)]
     fn next(&mut self) -> Option<Registers> {
         let pc = self.value(Register::PC) as usize;
         let instruction = match self.instruction(pc) {
