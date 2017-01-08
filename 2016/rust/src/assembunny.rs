@@ -31,9 +31,9 @@ impl Assembunny {
         let replacement = match instruction {
             Instruction::Cpy(a, b) => Instruction::Jnz(a, b),
             Instruction::Inc(x) => Instruction::Dec(x),
-            Instruction::Dec(x) => Instruction::Inc(x),
-            Instruction::Jnz(a, b) => Instruction::Cpy(a, b),
+            Instruction::Dec(x) |
             Instruction::Tgl(x) => Instruction::Inc(x),
+            Instruction::Jnz(a, b) => Instruction::Cpy(a, b),
         };
         self.instructions[i] = replacement;
     }
@@ -169,12 +169,12 @@ pub enum Instruction {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Instruction::Cpy(a, b) => write!(f, "cpy {} {}", a, b),
-            &Instruction::Inc(a) => write!(f, "inc {}", a),
-            &Instruction::Dec(a) => write!(f, "dec {}", a),
-            &Instruction::Jnz(a, b) => write!(f, "jnz {} {}", a, b),
-            &Instruction::Tgl(a) => write!(f, "tgl {}", a),
+        match *self {
+            Instruction::Cpy(a, b) => write!(f, "cpy {} {}", a, b),
+            Instruction::Inc(a) => write!(f, "inc {}", a),
+            Instruction::Dec(a) => write!(f, "dec {}", a),
+            Instruction::Jnz(a, b) => write!(f, "jnz {} {}", a, b),
+            Instruction::Tgl(a) => write!(f, "tgl {}", a),
         }
     }
 }
@@ -187,11 +187,11 @@ pub enum Variable {
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Variable::Register(r) => {
+        match *self {
+            Variable::Register(r) => {
                 write!(f, "{}", format!("{:?}", r).to_lowercase())
             }
-            &Variable::Value(v) => write!(f, "{:?}", v),
+            Variable::Value(v) => write!(f, "{:?}", v),
         }
     }
 }
