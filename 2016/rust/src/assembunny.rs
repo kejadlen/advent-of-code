@@ -86,28 +86,20 @@ impl Registers {
     pub fn new() -> Self {
         Registers([0; 5])
     }
-
-    fn index(r: Register) -> usize {
-        match r {
-            Register::PC => 0,
-            Register::A => 1,
-            Register::B => 2,
-            Register::C => 3,
-            Register::D => 4,
-        }
-    }
 }
 
 impl ops::Index<Register> for Registers {
     type Output = isize;
 
     fn index(&self, _index: Register) -> &isize {
-        self.0.index(Self::index(_index))
+        let index: u8 = _index.into();
+        self.0.index(index as usize)
     }
 }
 impl ops::IndexMut<Register> for Registers {
     fn index_mut(&mut self, _index: Register) -> &mut isize {
-        self.0.index_mut(Self::index(_index))
+        let index: u8 = _index.into();
+        self.0.index_mut(index as usize)
     }
 }
 
@@ -152,6 +144,18 @@ pub enum Register {
     B,
     C,
     D,
+}
+
+impl From<Register> for u8 {
+    fn from(r: Register) -> u8 {
+        match r {
+            Register::PC => 0,
+            Register::A => 1,
+            Register::B => 2,
+            Register::C => 3,
+            Register::D => 4,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
