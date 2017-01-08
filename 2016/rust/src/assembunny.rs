@@ -54,8 +54,7 @@ impl Iterator for Assembunny {
         self.registers[Register::PC] += 1;
         match instruction {
             Instruction::Cpy(v, Variable::Register(r)) => {
-                let value = self.value(v);
-                self.registers[r] = value;
+                self.registers[r] = self.value(v);
             }
             Instruction::Inc(Variable::Register(r)) => {
                 self.registers[r] += 1;
@@ -64,9 +63,8 @@ impl Iterator for Assembunny {
                 self.registers[r] -= 1;
             }
             Instruction::Jnz(v, delta) if self.value(v) != 0 => {
-                let delta = self.value(delta);
-                let pc = self.value(Register::PC) + delta - 1;
-                self.registers[Register::PC] = pc;
+                self.registers[Register::PC] -= 1;
+                self.registers[Register::PC] += self.value(delta);
             }
             Instruction::Tgl(v) => {
                 let index = (pc as isize) + self.value(v);
@@ -92,14 +90,12 @@ impl ops::Index<Register> for Registers {
     type Output = isize;
 
     fn index(&self, _index: Register) -> &isize {
-        let index: u8 = _index.into();
-        self.0.index(index as usize)
+        self.0.index(usize::from(_index))
     }
 }
 impl ops::IndexMut<Register> for Registers {
     fn index_mut(&mut self, _index: Register) -> &mut isize {
-        let index: u8 = _index.into();
-        self.0.index_mut(index as usize)
+        self.0.index_mut(usize::from(_index))
     }
 }
 
@@ -108,18 +104,6 @@ pub struct Instructions(Vec<Instruction>);
 impl Instructions {
     fn get(&self, i: usize) -> Option<&Instruction> {
         self.0.get(i)
-    }
-}
-
-impl fmt::Display for Instructions {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               self.0
-                   .iter()
-                   .map(Instruction::to_string)
-                   .collect::<Vec<_>>()
-                   .join("\n"))
     }
 }
 
@@ -146,8 +130,8 @@ pub enum Register {
     D,
 }
 
-impl From<Register> for u8 {
-    fn from(r: Register) -> u8 {
+impl From<Register> for usize {
+    fn from(r: Register) -> usize {
         match r {
             Register::PC => 0,
             Register::A => 1,
@@ -167,6 +151,38 @@ pub enum Instruction {
     Tgl(Variable),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Variable {
+    Register(Register),
+    Value(isize),
+}
+
+impl From<Register> for Variable {
+    fn from(r: Register) -> Self {
+        Variable::Register(r)
+    }
+}
+
+impl From<isize> for Variable {
+    fn from(i: isize) -> Self {
+        Variable::Value(i)
+    }
+}
+
+// Display
+
+impl fmt::Display for Instructions {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "{}",
+               self.0
+                   .iter()
+                   .map(Instruction::to_string)
+                   .collect::<Vec<_>>()
+                   .join("\n"))
+    }
+}
+
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -179,12 +195,6 @@ impl fmt::Display for Instruction {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Variable {
-    Register(Register),
-    Value(isize),
-}
-
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -193,12 +203,6 @@ impl fmt::Display for Variable {
             }
             Variable::Value(v) => write!(f, "{:?}", v),
         }
-    }
-}
-
-impl From<Register> for Variable {
-    fn from(r: Register) -> Self {
-        Variable::Register(r)
     }
 }
 
