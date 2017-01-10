@@ -77,12 +77,12 @@ impl str::FromStr for Floor {
 impl<'a> TryFrom<regex::Captures<'a>> for Item {
     type Err = Error;
     fn try_from(c: regex::Captures) -> Result<Self> {
-        let element = c.name("element").ok_or("")?;
-        let itemtype = c.name("itemtype").ok_or("")?;
+        let element = c.name("element").ok_or("missing element name")?;
+        let itemtype = c.name("itemtype").ok_or("missing item type")?;
         match itemtype {
             "generator" => Ok(Item::Generator(element.into())),
             "microchip" => Ok(Item::Microchip(element.into())),
-            _ => Err("".into()),
+            _ => Err(format!("unexpected item type: '{}'", itemtype).into()),
         }
     }
 }
