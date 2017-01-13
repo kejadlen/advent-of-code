@@ -11,6 +11,7 @@ struct Facility {
     floors: Vec<Floor>,
 }
 
+#[derive(Debug, PartialEq)]
 struct Floor {
     items: Vec<Item>,
 }
@@ -46,7 +47,7 @@ fn test_generators_and_microchips() {
     assert_eq!(floor.microchips(), vec!["b".to_string()]);
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Item {
     Generator(String),
     Microchip(String),
@@ -141,6 +142,28 @@ fn test_is_safe() {
 // The third floor contains a lithium generator.
 // The fourth floor contains nothing relevant.
 // As a diagram (F# for a Floor number, E for Elevator, H for Hydrogen, L for Lithium, M for Microchip, and G for Generator), the initial state looks like this:
+
+impl str::FromStr for Facility {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self> {
+        let floors = input.lines()
+            .map(|line| line.parse::<Floor>())
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Facility{floors})
+    }
+}
+
+#[test]
+fn test_facility_from_str() {
+    let input = "The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
+The second floor contains a hydrogen generator.
+The third floor contains a lithium generator.
+The fourth floor contains nothing relevant.";
+    let facility: Facility = input.parse().unwrap();
+    assert_eq!(facility.floors.len(), 4);
+    assert_eq!(facility.floors[1], Floor{items: vec![Item::Generator("hydrogen".into())]});
+}
 
 impl str::FromStr for Floor {
     type Err = Error;
@@ -247,3 +270,15 @@ fn test_floor_from_str() {
 // In this arrangement, it takes 11 steps to collect all of the objects at the fourth floor for assembly. (Each elevator stop counts as one step, even if nothing is added to or removed from it.)
 //
 // In your situation, what is the minimum number of steps required to bring all of the objects to the fourth floor?
+
+pub fn solve(input: &str) -> Result<String> {
+    return Ok("".into())
+}
+
+#[test]
+fn test_solve() {
+    let input = "The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
+The second floor contains a hydrogen generator.
+The third floor contains a lithium generator.
+The fourth floor contains nothing relevant.";
+}
