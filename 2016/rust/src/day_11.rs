@@ -1,3 +1,8 @@
+use regex;
+use std::convert::TryFrom;
+use std::str;
+use errors::*;
+
 // You come upon a column of four floors that have been entirely sealed off from the rest of the
 // building except for a small dedicated lobby. There are some radiation warnings and a big sign
 // which reads "Radioisotope Testing Facility".
@@ -6,19 +11,65 @@ struct Facility {
     floors: Vec<Floor>,
 }
 
-struct Floor(Vec<Item>);
+struct Floor {
+    items: Vec<Item>,
+}
 
-// According to the project status board, this facility is currently being used to experiment with
-// Radioisotope Thermoelectric Generators (RTGs, or simply "generators") that are designed to be
-// paired with specially-constructed microchips. Basically, an RTG is a highly radioactive rock
-// that generates electricity through heat.
+impl Floor {
+    fn generators(&self) -> Vec<String> {
+        self.items.iter().map(|item| {
+            match *item {
+                Item::Generator(ref s) => Some(s),
+                _ => None,
+            }
+        }).flat_map(|x| x).cloned().collect()
+    }
 
-#[derive(PartialEq)]
+    fn microchips(&self) -> Vec<String> {
+        self.items.iter().map(|item| {
+            match *item {
+                Item::Microchip(ref s) => Some(s),
+                _ => None,
+            }
+        }).flat_map(|x| x).cloned().collect()
+    }
+}
+
+#[test]
+fn test_generators_and_microchips() {
+    let items = vec![
+        Item::Generator("a".into()),
+        Item::Microchip("b".into()),
+    ];
+    let floor = Floor{items};
+    assert_eq!(floor.generators(), vec!["a".to_string()]);
+    assert_eq!(floor.microchips(), vec!["b".to_string()]);
+}
+
+#[derive(Clone, PartialEq)]
 enum Item {
     Generator(String),
     Microchip(String),
 }
 
+impl<'a> TryFrom<regex::Captures<'a>> for Item {
+    type Err = Error;
+    fn try_from(c: regex::Captures) -> Result<Item> {
+        let element = c.name("element").ok_or("missing element name")?;
+        let itemtype = c.name("itemtype").ok_or("missing item type")?;
+        match itemtype {
+            "generator" => { Ok(Item::Generator(element.into())) },
+            "microchip" => { Ok(Item::Microchip(element.into())) },
+            _ => { Err(format!("invalid item type: '{}", itemtype).into()) },
+        }
+    }
+}
+
+// According to the project status board, this facility is currently being used to experiment with
+// Radioisotope Thermoelectric Generators (RTGs, or simply "generators") that are designed to be
+// paired with specially-constructed microchips. Basically, an RTG is a highly radioactive rock
+// that generates electricity through heat.
+//
 // The experimental RTGs have poor radiation containment, so they're dangerously radioactive. The
 // chips are prototypes and don't have normal radiation shielding, but they do have the ability to
 // generate an electromagnetic radiation shield when powered. Unfortunately, they can only be
@@ -29,7 +80,39 @@ enum Item {
 // to its own RTG, the chip will be fried. Therefore, it is assumed that you will follow procedure
 // and keep chips connected to their corresponding RTG when they're in the same room, and away from
 // other RTGs otherwise.
-//
+
+impl Floor {
+    fn is_safe(&self) -> bool {
+        if self.generators().is_empty() {
+            return true;
+        }
+
+        let generators = self.generators();
+        let microchips = self.microchips();
+        let unpaired_chips = microchips.iter().filter(|microchip| {
+            !generators.contains(&microchip)
+        });
+        unpaired_chips.count() == 0
+    }
+}
+
+#[test]
+fn test_is_safe() {
+    assert!(Floor{items: Vec::new()}.is_safe());
+    assert!(Floor{items: vec![Item::Generator("".into())]}.is_safe());
+    assert!(Floor{items: vec![Item::Microchip("a".into())]}.is_safe());
+
+    let items = vec![Item::Generator("a".into()), Item::Microchip("b".into())];
+    assert!(!Floor{items}.is_safe());
+
+    let items = vec![
+        Item::Generator("a".into()),
+        Item::Microchip("a".into()),
+        Item::Generator("b".into()),
+    ];
+    assert!(Floor{items}.is_safe());
+}
+
 // These microchips sound very interesting and useful to your current activities, and you'd like to
 // try to retrieve them. The fourth floor of the facility has an assembling machine which can make
 // a self-contained, shielded computer for you to take with you - that is, if you can bring it all
@@ -59,42 +142,34 @@ enum Item {
 // The fourth floor contains nothing relevant.
 // As a diagram (F# for a Floor number, E for Elevator, H for Hydrogen, L for Lithium, M for Microchip, and G for Generator), the initial state looks like this:
 
-use regex;
-use std::convert::TryFrom;
-use std::str;
-use errors::*;
-
 impl str::FromStr for Floor {
     type Err = Error;
 
     fn from_str(input: &str) -> Result<Self> {
+        // Ok(Floor{items: Vec::new()})
         let re = regex::Regex::new(r"(?P<element>\w+)(-compatible)? (?P<itemtype>generator|microchip)").unwrap();
-        let items = re.captures_iter(input).map(Item::try_from).collect::<Result<_>>();
-        items.map(|items| Floor(items))
-    }
-}
-
-impl<'a> TryFrom<regex::Captures<'a>> for Item {
-    type Err = Error;
-    fn try_from(c: regex::Captures) -> Result<Self> {
-        let element = c.name("element").ok_or("missing element name")?;
-        let itemtype = c.name("itemtype").ok_or("missing item type")?;
-        match itemtype {
-            "generator" => Ok(Item::Generator(element.into())),
-            "microchip" => Ok(Item::Microchip(element.into())),
-            _ => Err(format!("unexpected item type: '{}'", itemtype).into()),
-        }
+        re.captures_iter(input)
+            .map(|captures| Item::try_from(captures))
+            .collect::<Result<Vec<_>>>()
+            .map(|items| Floor{items} )
     }
 }
 
 #[test]
 fn test_floor_from_str() {
-    let input = "The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.";
+    let input = "The first floor contains a hydrogen-compatible microchip and \
+                 a lithium-compatible microchip.";
     let floor: Floor = input.parse().unwrap();
+    assert_eq!(floor.items.len(), 2);
+    assert!(floor.items.contains(&Item::Microchip("hydrogen".into())));
+    assert!(floor.items.contains(&Item::Microchip("lithium".into())));
 
-    assert_eq!(floor.0.len(), 2);
-    assert!(floor.0.contains(&Item::Microchip("hydrogen".into())));
-    assert!(floor.0.contains(&Item::Microchip("lithium".into())));
+    let input = "The first floor contains a hydrogen-compatible microchip and \
+                 a lithium generator.";
+    let floor: Floor = input.parse().unwrap();
+    assert_eq!(floor.items.len(), 2);
+    assert!(floor.items.contains(&Item::Microchip("hydrogen".into())));
+    assert!(floor.items.contains(&Item::Generator("lithium".into())));
 }
 
 // F4 .  .  .  .  .
