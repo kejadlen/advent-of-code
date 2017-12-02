@@ -8,8 +8,9 @@ pub fn solve(input: &str) -> Result<String, Error> {
         .collect::<Result<_, _>>()?;
 
     // 1
-    let offset = 1;
-    let offset_iter = input.iter().skip(offset).cycle().take(input.len());
+    let offset = input.len() / 2;
+
+    let offset_iter = input.iter().cycle().skip(offset).take(input.len());
     Ok(
         input
             .iter()
@@ -19,4 +20,13 @@ pub fn solve(input: &str) -> Result<String, Error> {
             .sum::<u32>()
             .to_string(),
     )
+}
+
+#[test]
+fn part_two() {
+    assert_eq!(solve("1212").unwrap(), "6".to_string());
+    assert_eq!(solve("1221").unwrap(), "0".to_string());
+    assert_eq!(solve("123425").unwrap(), "4".to_string());
+    assert_eq!(solve("123123").unwrap(), "12".to_string());
+    assert_eq!(solve("12131415").unwrap(), "4".to_string());
 }
