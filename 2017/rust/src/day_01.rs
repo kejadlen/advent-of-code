@@ -11,7 +11,7 @@ pub fn solve(input: &str) -> Result<String, Error> {
     // let offset = 1;
     let offset = input.len() / 2;
 
-    let offset_iter = input.iter().cycle().skip(offset).take(input.len());
+    let offset_iter = input.iter().cycle().skip(offset);
     Ok(
         input
             .iter()
