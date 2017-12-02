@@ -8,6 +8,7 @@ pub fn solve(input: &str) -> Result<String, Error> {
         .collect::<Result<_, _>>()?;
 
     // 1
+    // let offset = 1;
     let offset = input.len() / 2;
 
     let offset_iter = input.iter().cycle().skip(offset).take(input.len());
