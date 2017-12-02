@@ -1,5 +1,6 @@
 use failure::*;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     let input: Vec<u32> = input
         .trim()
