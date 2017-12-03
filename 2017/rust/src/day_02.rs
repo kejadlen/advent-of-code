@@ -17,7 +17,16 @@ pub fn solve(input: &str) -> Result<String, Error> {
 }
 
 fn checksum(row: &[usize]) -> usize {
-    let min = row.iter().min().unwrap();
-    let max = row.iter().max().unwrap();
-    max - min
+    // 1
+    // let min = row.iter().min().unwrap();
+    // let max = row.iter().max().unwrap();
+    // max - min
+
+    row.iter()
+        .flat_map(|x| row.iter().map(|y| (x, y)).collect::<Vec<_>>())
+        .filter(|&(a,b)| a != b)
+        .filter(|&(&a,&b)| (a as f64) % (b as f64) == 0.0)
+        .map(|(&a,&b)| a / b)
+        .next()
+        .unwrap()
 }
