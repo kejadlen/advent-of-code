@@ -59,12 +59,37 @@ class Spiral
   end
 end
 
+class Grid
+  def initialize
+    @grid = Hash.new {|h,(x,y)|
+      neighbors = [[-1, 1], [0, 1], [1, 1],
+                   [-1, 0],         [1, 0],
+                   [-1,-1], [0,-1], [1,-1]]
+      h[[x,y]] = neighbors
+        .map {|i,j| [x+i,y+j] }
+        .select {|i,j| h.has_key?([i,j]) }
+        .map {|i,j| h[[i,j]] }
+        .sum
+    }
+    @grid[[0,0]] = 1
+  end
+
+  def [](x,y)
+    @grid[[x,y]]
+  end
+end
+
 if $0 == __FILE__
-  if ARGV.shift == "test"
-    require "minitest/test"
-  else
+  case ARGV.shift
+  when "test"
+    require "minitest/autorun"
+  when "0"
     input = ARGF.read.to_i
     p Spiral.new.each.with_index.find {|_,i| i == input - 1 }.first.sum
+  when "1"
+    input = ARGF.read.to_i
+    grid = Grid.new
+    p Spiral.new.each.lazy.map {|x,y| grid[x,y] }.find {|value| value > input }
   end
 end
 
@@ -85,5 +110,17 @@ class TestSpiral < Minitest::Test
 
     spiral = Spiral.new
     assert_equal [0,-2], spiral.each.with_index.find {|_,i| i == 22 }.first
+  end
+end
+
+class TestGrid < Minitest::Test
+  def test_grid
+    grid = Grid.new
+    assert_equal 1, grid[0,0]
+    assert_equal 1, grid[1,0]
+    assert_equal 2, grid[1,1]
+    assert_equal 4, grid[0,1]
+    assert_equal 5, grid[-1,1]
+    assert_equal 10, grid[-1,0]
   end
 end
