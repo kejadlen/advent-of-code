@@ -1,40 +1,89 @@
-input = ARGF.read.to_i
+require "minitest"
 
-dir = [1,0]
+class Spiral
+  def initialize
+    @square = [0,0]
+    @dir = [1,0]
+    @steps = [1, 1]
+  end
 
-def next_dir(dir)
-  case dir
-  when [1,0]
-    [0,1]
-  when [0,1]
-    [-1,0]
-  when [-1,0]
-    [0,-1]
-  when [0,-1]
-    [1,0]
-  else
-    raise "invalid dir: #{dir}"
+  def each
+    return enum_for(__method__) unless block_given?
+
+    loop do
+      yield @square
+      step!
+    end
+  end
+
+  private
+
+  def step!
+    @steps[0] -= 1
+    @square = @square.zip(@dir).map {|i,j| i+j }
+    if @steps[0] == 0
+      change_dir!
+      @steps << next_steps
+      @steps.shift
+    end
+  end
+
+  def change_dir!
+    @dir = case @dir
+           when [1,0]
+             [0,1]
+           when [0,1]
+             [-1,0]
+           when [-1,0]
+             [0,-1]
+           when [0,-1]
+             [1,0]
+           else
+             raise "invalid dir: #@dir"
+    end
+  end
+
+  def next_steps
+    case @dir
+    when [1,0]
+      @steps[1]
+    when [0,1]
+      @steps[1] + 1
+    when [-1,0]
+      @steps[1]
+    when [0,-1]
+      @steps[1] + 1
+    else
+      raise "invalid dir: #@dir"
+    end
   end
 end
 
-grid = Hash.new(0)
-grid[[0,0]] = 1
-
-def next_value(grid, x, y)
-  [[-1, 1],[0, 1],[1,1],
-   [-1, 0],       [1,0],
-   [-1,-1],[0,-1],[1,-1]].map {|i,j| grid[[x+i,y+j]]}.sum
+if $0 == __FILE__
+  if ARGV.shift == "test"
+    require "minitest/test"
+  else
+    input = ARGF.read.to_i
+    p Spiral.new.each.with_index.find {|_,i| i == input - 1 }.first.sum
+  end
 end
 
-current = [0,0]
-loop do
-  next_square = current.zip(dir).map {|a,b| a + b }
-  value = next_value(grid, *next_square)
-  puts "#{current}: #{value}"
-  exit if value > input
-  grid[next_square] = value
-  current = next_square
-  dir = next_dir(dir) if grid[current.zip(next_dir(dir)).map {|a,b| a + b }] == 0
-end
+class TestSpiral < Minitest::Test
+  def test_spiral
+    spiral = Spiral.new
+    e = spiral.each
+    assert_equal [0,0], e.next
+    assert_equal [1,0], e.next
+    assert_equal [1,1], e.next
+    assert_equal [0,1], e.next
+    assert_equal [-1,1], e.next
+    assert_equal [-1,0], e.next
+    assert_equal [-1,-1], e.next
+    assert_equal [0,-1], e.next
+    assert_equal [1,-1], e.next
+    assert_equal [2,-1], e.next
 
-p next_value(grid, 1,0)
+    spiral = Spiral.new
+    assert_equal [0,-2], spiral.each.with_index.find {|_,i| i == 22 }.first
+  end
+end
