@@ -2,61 +2,35 @@ require "minitest"
 
 class Spiral
   def initialize
-    @square = [0,0]
-    @dir = [1,0]
-    @steps = [1, 1]
+    @state = [0,0]
   end
 
   def each
     return enum_for(__method__) unless block_given?
 
-    loop do
-      yield @square
-      step!
+    (1..Float::INFINITY).lazy
+      .flat_map {|i| [i, i] }
+      .zip(%i[r u l d].cycle)
+      .flat_map {|n,d| Array.new(n, d) }
+      .each do |dir|
+
+      yield @state
+      @state = @state.zip(
+        case dir
+        when :r
+          [1, 0]
+        when :u
+          [0, 1]
+        when :l
+          [-1, 0]
+        when :d
+          [0, -1]
+        end
+      ).map {|a,b| a + b }
+
     end
   end
 
-  private
-
-  def step!
-    @steps[0] -= 1
-    @square = @square.zip(@dir).map {|i,j| i+j }
-    if @steps[0] == 0
-      change_dir!
-      @steps << next_steps
-      @steps.shift
-    end
-  end
-
-  def change_dir!
-    @dir = case @dir
-           when [1,0]
-             [0,1]
-           when [0,1]
-             [-1,0]
-           when [-1,0]
-             [0,-1]
-           when [0,-1]
-             [1,0]
-           else
-             raise "invalid dir: #@dir"
-    end
-  end
-
-  def next_steps
-    case @dir
-    when [1,0]
-      @steps[1]
-    when [0,1]
-      @steps[1] + 1
-    when [-1,0]
-      @steps[1]
-    when [0,-1]
-      @steps[1] + 1
-    else
-      raise "invalid dir: #@dir"
-    end
-  end
 end
 
 class Grid
