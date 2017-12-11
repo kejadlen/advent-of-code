@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::iter;
 use failure::*;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     let input: usize = input.trim().parse()?;
 
@@ -23,13 +24,14 @@ pub fn solve(input: &str) -> Result<String, Error> {
         })
         .find(|value| value > &input)
         .map(|value| value.to_string())
-        .ok_or_else(|| format_err!(""))
+        .ok_or_else(|| err_msg(""))
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct Coord(isize, isize);
 
 impl Coord {
+    #[allow(dead_code)]
     fn neighbors(&self) -> Vec<Coord> {
         vec![
             [-1, 1],
@@ -54,10 +56,12 @@ enum Dir {
     Down,
 }
 
+#[allow(dead_code)]
 lazy_static! {
     static ref DIRS: Vec<Dir> = vec![Dir::Right, Dir::Up, Dir::Left, Dir::Down];
 }
 
+#[allow(dead_code)]
 fn spiral() -> impl Iterator<Item = Coord> {
     (1..)
         .flat_map(|x| iter::repeat(x).take(2))
