@@ -18,7 +18,7 @@ struct Passphrase {
 impl Passphrase {
     fn is_valid(&self) -> bool {
         let mut words = HashSet::new();
-        return !self.words
+        !self.words
             .split_whitespace()
             .map(|word| {
                 let mut chars: Vec<String> = word.chars().map(|x| x.to_string()).collect();
@@ -30,7 +30,7 @@ impl Passphrase {
                     return true;
                 }
                 words.insert(word);
-                return false;
-            });
+                false
+            })
     }
 }

@@ -5,7 +5,7 @@ pub fn solve(input: &str) -> Result<String, Error> {
     let input: Vec<u32> = input
         .trim()
         .chars()
-        .map(|x| x.to_digit(10).ok_or_else(|| format_err!("")))
+        .map(|x| x.to_digit(10).ok_or_else(|| err_msg("")))
         .collect::<Result<_, _>>()?;
 
     // 1
