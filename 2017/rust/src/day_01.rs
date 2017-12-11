@@ -13,15 +13,13 @@ pub fn solve(input: &str) -> Result<String, Error> {
     let offset = input.len() / 2;
 
     let offset_iter = input.iter().cycle().skip(offset);
-    Ok(
-        input
-            .iter()
-            .zip(offset_iter)
-            .filter(|&a| a.0 == a.1)
-            .map(|a| a.0)
-            .sum::<u32>()
-            .to_string(),
-    )
+    Ok(input
+        .iter()
+        .zip(offset_iter)
+        .filter(|&a| a.0 == a.1)
+        .map(|a| a.0)
+        .sum::<u32>()
+        .to_string())
 }
 
 #[test]
