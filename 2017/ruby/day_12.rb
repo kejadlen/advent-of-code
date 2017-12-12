@@ -1,19 +1,31 @@
 require "set"
-h = Hash[ARGF.read.strip.scan(/(\d+) <-> ([\d, ]+)/).map {|a,b| [a.to_i, b.scan(/\d+/).map(&:to_i)]}]
+
+@programs = Hash[
+  ARGF.read.strip
+    .lines
+    .map {|line| line.scan(/\d+/).map(&:to_i) }
+    .map {|x| [x.shift, x] }
+]
+
+def group(id)
+  group = Set.new
+  queue = [id]
+  until queue.empty?
+    program = queue.shift
+    next if group.include?(program)
+    group << program
+    queue = queue.concat(@programs[program])
+  end
+  group
+end
+
+p group(0).size
+
 count = 0
-until h.empty?
-  key = h.keys.first
-  foo = Set.new
-  foo << key
-  bar = [key]
-  until bar.empty?
-    baz = bar.shift
-    bar = bar.concat(h[baz] - foo.to_a)
-    foo = foo.merge(h[baz])
+until @programs.empty?
+  group(@programs.keys.first).each do |program|
+    @programs.delete(program)
   end
   count += 1
-  foo.each do |k|
-    h.delete(k)
-  end
 end
 p count
