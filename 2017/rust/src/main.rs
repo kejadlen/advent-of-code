@@ -12,6 +12,7 @@ mod day_01;
 mod day_02;
 mod day_03;
 mod day_04;
+mod day_05;
 
 fn main() {
     if let Err(e) = run() {
@@ -23,7 +24,7 @@ fn run() -> Result<(), Error> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
 
-    let solution = day_04::solve(&input)?;
+    let solution = day_05::solve(&input)?;
     println!("{}", solution);
 
     Ok(())

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use failure::Error;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     Ok(input
         .trim()
@@ -11,11 +12,13 @@ pub fn solve(input: &str) -> Result<String, Error> {
         .to_string())
 }
 
+#[allow(dead_code)]
 struct Passphrase {
     words: String,
 }
 
 impl Passphrase {
+    #[allow(dead_code)]
     fn is_valid(&self) -> bool {
         let mut words = HashSet::new();
         !self.words
