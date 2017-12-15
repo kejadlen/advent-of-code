@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use failure::*;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     let mut jumps: HashMap<isize, isize> = input
         .trim()
