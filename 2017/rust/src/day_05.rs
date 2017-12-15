@@ -8,8 +8,8 @@ pub fn solve(input: &str) -> Result<String, Error> {
         .trim()
         .lines()
         .enumerate()
-        .map(|(i,x)| x.parse().map(|x| (i as isize, x)))
-        .collect::<Result<_,_>>()?;
+        .map(|(i, x)| x.parse().map(|x| (i as isize, x)))
+        .collect::<Result<_, _>>()?;
     let mut pc = 0;
     let mut steps = 0;
     while let Entry::Occupied(mut entry) = jumps.entry(pc) {
