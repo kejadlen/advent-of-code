@@ -6,3 +6,4 @@ authors = ["Alpha Chen <alpha.chen@gmail.com>"]
 [dependencies]
 failure = "0.1"
 lazy_static = "1.0"
+regex = "0.2"

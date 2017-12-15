@@ -3,6 +3,7 @@
 extern crate failure;
 #[macro_use]
 extern crate lazy_static;
+extern crate regex;
 
 use std::io::{self, Read};
 
