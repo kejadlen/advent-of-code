@@ -1,6 +1,7 @@
 use failure::*;
 use regex::Regex;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     let re: Regex = Regex::new(r"\d+")?;
     let matches: Vec<_> = re.find_iter(input)
