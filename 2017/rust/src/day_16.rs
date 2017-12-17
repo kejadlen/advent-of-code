@@ -1,45 +1,82 @@
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use failure::*;
 use regex::Regex;
 
 pub fn solve(input: &str) -> Result<String, Error> {
     // let input = "s1,x3/4,pe/b";
-    let moves: Vec<_> = input
+    let moves = input
         .split(',')
         .map(Move::try_from)
         .collect::<Result<_, _>>()?;
-    let mut programs = (b'a'..=b'p').map(|c| c as char).collect::<Vec<_>>();
-    dance(&moves, &mut programs);
-    Ok(programs.iter().collect())
+    let programs = (b'a'..=b'p').map(|c| c as char).collect();
+    let dance = Dance { moves, programs };
+
+    // dance.next();
+    // Ok(dance.next().unwrap().iter().collect::<String>())
+
+    let history = dance
+        .enumerate()
+        .scan(HashMap::new(), |state, (i, programs)| {
+            if state.contains_key(&programs) {
+                None
+            } else {
+                state.insert(programs, i);
+                Some(state.clone())
+            }
+        })
+        .last()
+        .unwrap();
+    let index = 1_000_000_000 % history.len();
+    Ok(history
+        .iter()
+        .find(|(_, &v)| v == &index)
+        .map(|(k, _)| k)
+        .unwrap()
+        .iter()
+        .collect())
 }
 
-fn dance(moves: &[Move], programs: &mut [char]) {
-    for m in moves {
-        match m {
-            Move::Spin(size) => {
-                let len = programs.len();
-                programs.rotate(len - size);
-            }
-            Move::Exchange(a, b) => {
-                programs.swap(*a, *b);
-            }
-            Move::Partner(a, b) => {
-                let a = programs.iter().position(|x| x == a).unwrap();
-                let b = programs.iter().position(|x| x == b).unwrap();
-                programs.swap(a, b);
+struct Dance {
+    moves: Vec<Move>,
+    programs: Vec<char>,
+}
+
+impl Iterator for Dance {
+    type Item = Vec<char>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self.programs.clone();
+
+        for m in &self.moves {
+            match m {
+                Move::Spin(size) => {
+                    let len = self.programs.len();
+                    self.programs.rotate(len - size);
+                }
+                Move::Exchange(a, b) => {
+                    self.programs.swap(*a, *b);
+                }
+                Move::Partner(a, b) => {
+                    let a = self.programs.iter().position(|x| x == a).unwrap();
+                    let b = self.programs.iter().position(|x| x == b).unwrap();
+                    self.programs.swap(a, b);
+                }
             }
         }
+
+        Some(item)
     }
 }
 
 #[test]
 fn test_dance() {
     let moves = vec![Move::Spin(1), Move::Exchange(3, 4), Move::Partner('e', 'b')];
-    let mut programs: Vec<_> = (b'a'..=b'e').map(|c| c as char).collect();
+    let programs = (b'a'..=b'e').map(|c| c as char).collect();
+    let mut dance = Dance { moves, programs };
 
-    dance(&moves, &mut programs);
-
-    assert_eq!(programs, vec!['b', 'a', 'e', 'd', 'c']);
+    assert_eq!(dance.next().unwrap(), vec!['a', 'b', 'c', 'd', 'e']);
+    assert_eq!(dance.next().unwrap(), vec!['b', 'a', 'e', 'd', 'c']);
 }
 
 #[derive(Debug, Eq, PartialEq)]
