@@ -7,18 +7,13 @@ def run
   ss = StringScanner.new(@dance)
   until ss.eos?
     case
-    when ss.scan(/s/)
-      spin = ss.scan(/\d+/).to_i
-      @programs.rotate!(@programs.size - spin)
-    when ss.scan(/x/)
-      a = ss.scan(/\d+/).to_i
-      ss.scan(/\//)
-      b = ss.scan(/\d+/).to_i
+    when ss.scan(/s(\d+)/)
+      @programs.rotate!(@programs.size - ss[1].to_i)
+    when ss.scan(/x(\d+)\/(\d+)/)
+      a, b = ss[1].to_i, ss[2].to_i
       @programs[a], @programs[b] = @programs[b], @programs[a]
-    when ss.scan(/p/)
-      a = @programs.index(ss.scan(/\w/))
-      ss.scan(/\//)
-      b = @programs.index(ss.scan(/\w/))
+    when ss.scan(/p(\w)\/(\w)/)
+      a, b = @programs.index(ss[1]), @programs.index(ss[2])
       @programs[a], @programs[b] = @programs[b], @programs[a]
     when ss.scan(/,/)
     end
