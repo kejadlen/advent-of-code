@@ -1,20 +1,24 @@
 use std::collections::HashSet;
 use failure::*;
 
+#[allow(dead_code)]
 pub fn solve(input: &str) -> Result<String, Error> {
     let banks: Vec<_> = input
         .split_whitespace()
         .map(str::parse)
         .collect::<Result<_, _>>()?;
 
-    let mut reallocation = Reallocation { banks: banks.clone() };
+    let mut reallocation = Reallocation {
+        banks: banks.clone(),
+    };
     let cycles = unique_cycles(reallocation);
 
     reallocation = Reallocation { banks };
     Ok((unique_cycles(reallocation.skip(cycles - 1)) - 1).to_string())
 }
 
-fn unique_cycles<R: Iterator<Item=Vec<usize>>>(reallocation: R) -> usize {
+#[allow(dead_code)]
+fn unique_cycles<R: Iterator<Item = Vec<usize>>>(reallocation: R) -> usize {
     let mut seen = HashSet::new();
     for (i, banks) in reallocation.enumerate() {
         if seen.contains(&banks) {
@@ -28,10 +32,13 @@ fn unique_cycles<R: Iterator<Item=Vec<usize>>>(reallocation: R) -> usize {
 
 #[test]
 fn test_part_one() {
-    let reallocation = Reallocation { banks: vec![0, 2, 7, 0] };
+    let reallocation = Reallocation {
+        banks: vec![0, 2, 7, 0],
+    };
     assert_eq!(unique_cycles(reallocation), 5);
 }
 
+#[allow(dead_code)]
 struct Reallocation {
     banks: Vec<usize>,
 }
