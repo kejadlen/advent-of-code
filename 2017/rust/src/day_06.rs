@@ -53,7 +53,7 @@ impl Iterator for Reallocation {
         let (start, max) = banks
             .iter()
             .max_by_key(|&&(_, x)| x)
-            .map(|&(i, x)| (i, x.clone()))?;
+            .map(|&(i, x)| (i, *x))?;
 
         let len = self.banks.len();
         self.banks[start] = 0;
