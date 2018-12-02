@@ -28,7 +28,7 @@ fn day_1_1(input: &str, delimiter: &str) -> String {
             let count = seen.entry(freq.clone()).or_insert(0);
             *count += 1;
 
-            Some((freq.clone(), count.clone()))
+            Some((*freq, *count))
         })
         .filter(|(_, count)| *count > 1)
         .map(|(freq, _)| freq)
