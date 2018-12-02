@@ -15,20 +15,23 @@ fn test_day_1_0() {
 }
 
 fn day_1_1(input: &str, delimiter: &str) -> String {
-    let mut seen = HashMap::new();
-    seen.insert(0, 1);
-
-    input
-        .split(delimiter)
-        .flat_map(|change| change.parse::<i32>().ok())
-        .cycle()
-        .scan((seen, 0), |(seen, freq), change| {
+    vec![0 as i32] // Start with 0 frequency
+        .into_iter()
+        .chain(
+            input
+                .split(delimiter)
+                .map(|change| change.parse::<i32>().unwrap())
+                .cycle(),
+        )
+        .scan(0, |freq, change| {
             *freq += change;
-
-            let count = seen.entry(freq.clone()).or_insert(0);
+            Some(*freq)
+        })
+        .scan(HashMap::new(), |history, freq| {
+            let count = history.entry(freq).or_insert(0);
             *count += 1;
 
-            Some((*freq, *count))
+            Some((freq, *count))
         })
         .filter(|(_, count)| *count > 1)
         .map(|(freq, _)| freq)
