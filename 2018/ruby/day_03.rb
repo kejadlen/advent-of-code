@@ -18,7 +18,7 @@ claims, fabric = ARGF
         fabric[[y+dy, x+dx]] << claim
       }
     }
-}
+  }
 
 p claims.reject {|claim|
   fabric.any? {|_,v|
