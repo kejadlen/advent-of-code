@@ -28,7 +28,7 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
                 fabric
                     .entry(square_inch)
                     .and_modify(|ids| ids.push(claim.id))
-                    .or_insert(vec![claim.id]);
+                    .or_insert_with(|| vec![claim.id]);
             }
             fabric
         },
@@ -37,8 +37,7 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
     let output = values
         .iter()
         .map(|ids| ids[0])
-        .filter(|id| !values.iter().any(|ids| ids.len() > 1 && ids.contains(id)))
-        .next()
+        .find(|id| !values.iter().any(|ids| ids.len() > 1 && ids.contains(id)))
         .unwrap()
         .to_string();
     Ok(output)
