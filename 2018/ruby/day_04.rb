@@ -17,7 +17,13 @@ records.each do |record|
   end
 end
 
+# Part One
+guard, ranges = stats.max_by {|_,v| v.map(&:size).sum }
+minute = ranges.flat_map(&:to_a).group_by {|x| x }.transform_values(&:count).max_by(&:last).first
+p guard * minute
+
+# Part Two
 guard, (minute, _) = stats.map {|k,v|
-  [k, v.flat_map(&:to_a).group_by {|x| x }.max_by {|_,v| v.count }]
-}.max_by {|_,(_,v)| v.count }
+  [k, v.flat_map(&:to_a).group_by {|x| x }.transform_values(&:count).max_by(&:last)]
+}.max_by {|_,(_,v)| v }
 p guard * minute
