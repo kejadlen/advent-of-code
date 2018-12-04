@@ -21,15 +21,18 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
         .map(str::trim)
         .map(Claim::from_str)
         .collect::<Result<_, _>>()?;
-    let fabric = claims.iter().fold(HashMap::new(), |mut fabric: HashMap<(usize, usize), Vec<usize>>, claim| {
-        for square_inch in claim.square_inches() {
+    let fabric = claims.iter().fold(
+        HashMap::new(),
+        |mut fabric: HashMap<(usize, usize), Vec<usize>>, claim| {
+            for square_inch in claim.square_inches() {
+                fabric
+                    .entry(square_inch)
+                    .and_modify(|ids| ids.push(claim.id))
+                    .or_insert(vec![claim.id]);
+            }
             fabric
-                .entry(square_inch)
-                .and_modify(|ids| ids.push(claim.id))
-                .or_insert(vec![claim.id]);
-        }
-        fabric
-    });
+        },
+    );
     let values: Vec<_> = fabric.values().collect();
     let output = values
         .iter()
