@@ -1,4 +1,17 @@
-pub fn solve(input: &str) -> String {
+use std::error::Error;
+use std::io::{self, Read};
+
+fn main() -> Result<(), Box<Error>> {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input)?;
+
+    let output = solve(&input);
+    println!("{}", output);
+
+    Ok(())
+}
+
+fn solve(input: &str) -> String {
     let box_ids: Vec<_> = input.lines().map(BoxId::new).collect();
 
     let two_count = box_ids.iter().filter(|&x| x.is_two()).count();
