@@ -17,7 +17,7 @@ records.each do |record|
   end
 end
 
-stats.transform_values! {|v| v.group_by {|x| x }.transform_values(&:count) }
+stats.transform_values! {|v| v.group_by(&:itself).transform_values(&:count) }
 
 # Part One
 guard, minutes = stats.max_by {|_,v| v.values.sum }
