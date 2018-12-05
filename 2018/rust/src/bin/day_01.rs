@@ -1,6 +1,19 @@
 use std::collections::HashMap;
+use std::error::Error;
+use std::io::{self, Read};
 
-pub fn solve_0(input: &str, delimiter: &str) -> String {
+fn main() -> Result<(), Box<Error>> {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input)?;
+
+    let output = solve_1(&input, "\n");
+    println!("{}", output);
+
+    Ok(())
+}
+
+#[allow(dead_code)]
+fn solve_0(input: &str, delimiter: &str) -> String {
     let sum: i32 = input
         .trim()
         .split(delimiter)
@@ -14,7 +27,7 @@ fn test_solve_0() {
     assert_eq!(solve_0("+1, -2, +3, +1", ", "), "3");
 }
 
-pub fn solve_1(input: &str, delimiter: &str) -> String {
+fn solve_1(input: &str, delimiter: &str) -> String {
     vec![0 as i32] // Start with 0 frequency
         .into_iter()
         .chain(
