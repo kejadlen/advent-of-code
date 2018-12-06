@@ -20,17 +20,6 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
     Ok("".into())
 }
 
-fn parse_sleep_range(pair: Pair<Rule>) -> Range<usize> {
-    let mut sleep_range = pair.into_inner();
-    let falls_asleep: usize = parse_minute(sleep_range.next().unwrap());
-    let wakes_up: usize = parse_minute(sleep_range.next().unwrap());
-    (falls_asleep..wakes_up)
-}
-
-fn parse_minute(pair: Pair<Rule>) -> usize {
-    pair.into_inner().next().unwrap().as_str().parse().unwrap()
-}
-
 #[derive(Debug)]
 struct Record {
     guard_id: String,
@@ -56,6 +45,17 @@ impl Record {
             .collect();
 
         Ok(records)
+    }
+
+    fn parse_sleep_range(pair: Pair<Rule>) -> Range<usize> {
+        let mut sleep_range = pair.into_inner();
+        let falls_asleep: usize = Self::parse_minute(sleep_range.next().unwrap());
+        let wakes_up: usize = Self::parse_minute(sleep_range.next().unwrap());
+        (falls_asleep..wakes_up)
+    }
+
+    fn parse_minute(pair: Pair<Rule>) -> usize {
+        pair.into_inner().next().unwrap().as_str().parse().unwrap()
     }
 }
 
@@ -104,7 +104,7 @@ impl<'a> From<Pair<'a, Rule>> for Record {
             .next()
             .unwrap()
             .into_inner()
-            .map(parse_sleep_range)
+            .map(Self::parse_sleep_range)
             .collect();
 
         Record {
