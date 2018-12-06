@@ -1,0 +1,21 @@
+records = { SOI ~ record* ~ EOI }
+record = { begins_shift ~ sleep_ranges }
+
+begins_shift = { date ~ " Guard #" ~ guard_id ~ " begins shift" ~ eol }
+guard_id = { digit+ }
+sleep_ranges = { sleep_range* }
+sleep_range = { falls_asleep ~ wakes_up }
+
+falls_asleep = { date ~ " falls asleep" ~ eol }
+wakes_up = { date ~ " wakes up" ~ eol }
+
+date = _{ "[" ~ year ~ "-" ~ month ~ "-" ~ day ~ " " ~ hour ~ ":" ~ minute ~ "]" }
+
+year = _{ digit{4} }
+month = _{ digit{2} }
+day = _{ digit{2} }
+hour = _{ digit{2} }
+minute = { digit{2} }
+
+digit = _{ '0'..'9' }
+eol = _{ "\n" | EOI }
