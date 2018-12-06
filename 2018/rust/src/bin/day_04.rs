@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read};
 use std::ops::Range;
@@ -17,12 +18,76 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
-    Ok("".into())
+    let records = Record::parse(input)?;
+
+    let mut stats = HashMap::new();
+    for record in records {
+        let minute_stats = stats.entry(record.guard_id).or_insert_with(HashMap::new);
+        let minutes: Vec<_> = record
+            .sleep_ranges
+            .into_iter()
+            .flat_map(|x| x.collect::<Vec<_>>())
+            .collect();
+        for minute in minutes {
+            let count = minute_stats.entry(minute).or_insert(0);
+            *count += 1
+        }
+    }
+
+    // Part One
+    // let (guard, minute_stats) = stats
+    //     .iter()
+    //     .max_by_key::<usize, _>(|(_, v)| v.iter().map(|(_, v)| v).sum())
+    //     .unwrap();
+    // let (minute, _) = minute_stats.iter().max_by_key(|(_, &v)| v).unwrap();
+
+    // Part Two
+    let (guard, (minute, _)) = stats
+        .iter()
+        .flat_map(|(k, minute_counts)| {
+            minute_counts.iter().max_by_key(|(_, &v)| v).map(|v| (k, v))
+        })
+        .max_by_key(|(_, (_, &v))| v)
+        .unwrap();
+
+    Ok((guard * minute).to_string())
+}
+
+#[test]
+fn test_solve() {
+    let input = r"
+[1518-11-01 00:00] Guard #10 begins shift
+[1518-11-01 00:05] falls asleep
+[1518-11-01 00:25] wakes up
+[1518-11-01 00:30] falls asleep
+[1518-11-01 00:55] wakes up
+[1518-11-01 23:58] Guard #99 begins shift
+[1518-11-02 00:40] falls asleep
+[1518-11-02 00:50] wakes up
+[1518-11-03 00:05] Guard #10 begins shift
+[1518-11-03 00:24] falls asleep
+[1518-11-03 00:29] wakes up
+[1518-11-04 00:02] Guard #99 begins shift
+[1518-11-04 00:36] falls asleep
+[1518-11-04 00:46] wakes up
+[1518-11-05 00:03] Guard #99 begins shift
+[1518-11-05 00:45] falls asleep
+[1518-11-05 00:55] wakes up
+    "
+    .trim();
+
+    let output = solve(input).unwrap();
+
+    // Part One
+    // assert_eq!(output, "240".to_string());
+
+    // Part Two
+    assert_eq!(output, "4455".to_string());
 }
 
 #[derive(Debug)]
 struct Record {
-    guard_id: String,
+    guard_id: usize,
     sleep_ranges: Vec<Range<usize>>,
 }
 
@@ -85,7 +150,7 @@ fn test_parsing() {
     let records = Record::parse(input).unwrap();
     assert_eq!(records.len(), 5);
     let record = &records[0];
-    assert_eq!(record.guard_id, "10");
+    assert_eq!(record.guard_id, 10);
     assert_eq!(record.sleep_ranges, vec![(5..25), (30..55)]);
 }
 
@@ -99,7 +164,8 @@ impl<'a> From<Pair<'a, Rule>> for Record {
             .nth(1) // skip the minute
             .unwrap()
             .as_str()
-            .into();
+            .parse()
+            .unwrap();
         let sleep_ranges: Vec<_> = record
             .next()
             .unwrap()
