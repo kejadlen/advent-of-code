@@ -16,29 +16,22 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
-    let instructions: Instructions = input.parse()?;
-    let output = part_one(instructions).iter().map(char::to_string).collect();
+    let mut assembly: Assembly = input.parse()?;
+    let output = part_one(&mut assembly).iter().map(char::to_string).collect();
     Ok(output)
 }
 
+fn part_two<F: Fn(char) -> usize>(assembly: Assembly, worker_count: usize, step_time: F) {}
+
 #[allow(dead_code)]
-fn part_one(instructions: Instructions) -> Vec<char> {
-    let mut steps = instructions.steps;
-
+fn part_one(assembly: &mut Assembly) -> Vec<char> {
     let mut output = Vec::new();
-    while !steps.is_empty() {
-        let mut ready: Vec<_> = steps
-            .iter()
-            .filter(|(_, v)| v.is_empty())
-            .map(|(k, _)| k)
-            .collect();
-        ready.sort();
-        let done = *ready[0];
+    while !assembly.is_done() {
+        let mut available = assembly.available_steps();
+        available.sort();
+        let done = *available[0];
 
-        steps.remove(&done);
-        for dependencies in steps.values_mut() {
-            dependencies.remove(&done);
-        }
+        assembly.finish(&done);
 
         output.push(done);
     }
@@ -58,24 +51,44 @@ Step D must be finished before step E can begin.
 Step F must be finished before step E can begin.
     ";
 
-    let instructions: Instructions = input.parse().unwrap();
-    let output = part_one(instructions);
+    let mut assembly: Assembly = input.parse().unwrap();
+    let output = part_one(&mut assembly);
     assert_eq!(output, vec!['C', 'A', 'B', 'D', 'F', 'E']);
 }
 
-struct Instructions {
+struct Assembly {
     steps: HashMap<char, HashSet<char>>,
 }
 
-impl FromStr for Instructions {
+impl Assembly {
+    fn is_done(&self) -> bool {
+        self.steps.is_empty()
+    }
+
+    fn available_steps(&self) -> Vec<&char> {
+        self.steps
+            .iter()
+            .filter(|(_, v)| v.is_empty())
+            .map(|(k, _)| k)
+            .collect()
+    }
+
+    fn finish(&mut self, step: &char) {
+        self.steps.remove(step);
+        for dependencies in self.steps.values_mut() {
+            dependencies.remove(step);
+        }
+    }
+}
+
+impl FromStr for Assembly {
     type Err = Box<Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(r"^Step (\w).*step (\w)").unwrap();
 
         let mut steps = HashMap::new();
-        s
-            .trim()
+        s.trim()
             .lines()
             .flat_map(|x| re.captures(x))
             .map(|x| {
@@ -84,13 +97,13 @@ impl FromStr for Instructions {
                     .map(|x| x.as_str().chars().next().unwrap())
                     .collect::<Vec<_>>()
             })
-        .map(|x| (x[1], x[2]))
+            .map(|x| (x[1], x[2]))
             .for_each(|(x, y)| {
                 steps.entry(x).or_insert_with(HashSet::new);
                 let entry = steps.entry(y).or_insert_with(HashSet::new);
                 entry.insert(x);
             });
 
-        Ok(Instructions{steps})
+        Ok(Assembly { steps })
     }
 }
