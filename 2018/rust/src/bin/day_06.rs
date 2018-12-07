@@ -8,13 +8,47 @@ fn main() -> Result<(), Box<Error>> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
 
-    let output = solve(&input)?;
+    let output = part_two(&input, 10_000)?;
     println!("{}", output);
 
     Ok(())
 }
 
-fn solve(input: &str) -> Result<String, Box<Error>> {
+fn part_two(input: &str, max_distance: usize) -> Result<String, Box<Error>> {
+    let coords = Coords::from_str(input)?;
+
+    let min_x = coords.0.iter().map(|c| c.x).min().unwrap();
+    let max_x = coords.0.iter().map(|c| c.x).max().unwrap();
+    let min_y = coords.0.iter().map(|c| c.y).min().unwrap();
+    let max_y = coords.0.iter().map(|c| c.y).max().unwrap();
+    let top_left = Coord { x: min_x, y: min_y };
+    let bottom_right = Coord { x: max_x, y: max_y };
+
+    let grid = Grid::new(top_left, bottom_right, |coord| {
+        coords.total_distance(*coord)
+    });
+
+    let area = grid.locations.values().filter(|&&x| x < max_distance).count();
+    Ok(area.to_string())
+}
+
+#[test]
+fn test_part_two() {
+    let input = r"
+1, 1
+1, 6
+8, 3
+3, 4
+5, 5
+8, 9
+    ";
+
+    let output = part_two(&input, 32).unwrap();
+    assert_eq!(output, "16".to_string());
+}
+
+#[allow(dead_code)]
+fn part_one(input: &str) -> Result<String, Box<Error>> {
     let coords = Coords::from_str(input)?;
 
     let min_x = coords.0.iter().map(|c| c.x).min().unwrap();
@@ -53,7 +87,7 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
 }
 
 #[test]
-fn test_solve() {
+fn test_part_one() {
     let input = r"
 1, 1
 1, 6
@@ -63,7 +97,7 @@ fn test_solve() {
 8, 9
     ";
 
-    let output = solve(&input).unwrap();
+    let output = part_one(&input).unwrap();
     assert_eq!(output, "17".to_string());
 }
 
@@ -149,6 +183,11 @@ impl Coords {
             None
         }
     }
+
+    fn total_distance<C: Into<Coord>>(&self, c: C) -> usize {
+        let c = c.into();
+        self.0.iter().map(|x| x.distance(c) as usize).sum()
+    }
 }
 
 #[test]
@@ -169,6 +208,23 @@ fn test_closest() {
     assert_eq!(coords.closest((3, 2)), Some(Coord::from((3, 4))));
     assert_eq!(coords.closest((5, 0)), None);
     assert_eq!(coords.closest((0, 4)), None);
+}
+
+#[test]
+fn test_total_distance() {
+    let coords = Coords::from_str(
+        r"
+1, 1
+1, 6
+8, 3
+3, 4
+5, 5
+8, 9
+    ",
+    )
+    .unwrap();
+
+    assert_eq!(coords.total_distance((4, 3)), 30);
 }
 
 impl FromStr for Coords {
