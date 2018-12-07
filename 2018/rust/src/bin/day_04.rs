@@ -44,9 +44,7 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
     // Part Two
     let (guard, (minute, _)) = stats
         .iter()
-        .flat_map(|(k, minute_counts)| {
-            minute_counts.iter().max_by_key(|(_, &v)| v).map(|v| (k, v))
-        })
+        .flat_map(|(k, minute_counts)| minute_counts.iter().max_by_key(|(_, &v)| v).map(|v| (k, v)))
         .max_by_key(|(_, (_, &v))| v)
         .unwrap();
 
