@@ -28,7 +28,11 @@ fn part_two(input: &str, max_distance: usize) -> Result<String, Box<Error>> {
         coords.total_distance(*coord)
     });
 
-    let area = grid.locations.values().filter(|&&x| x < max_distance).count();
+    let area = grid
+        .locations
+        .values()
+        .filter(|&&x| x < max_distance)
+        .count();
     Ok(area.to_string())
 }
 
