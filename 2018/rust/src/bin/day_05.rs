@@ -15,10 +15,27 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
-    let reaction = Reaction {
-        polymer: input.trim().into(),
-    };
-    Ok(reaction.last().map(|x| x.len().to_string()).unwrap())
+    let polymer = input.trim();
+
+    // Part One
+    // let reaction = Reaction {
+    //     polymer: polymer.into()
+    // };
+    // Ok(reaction.last().map(|x| x.len().to_string()).unwrap())
+
+    // Part Two
+    let output = (b'a'..=b'z')
+        .map(|x| x as char)
+        .map(|x| {
+            polymer
+                .replace(x, "")
+                .replace(&x.to_uppercase().to_string(), "")
+        })
+        .map(|polymer| Reaction { polymer })
+        .flat_map(|reaction| reaction.last())
+        .map(|polymer| polymer.len())
+        .min();
+    Ok(output.unwrap().to_string())
 }
 
 #[test]
@@ -28,7 +45,10 @@ fn test_solve() {
     let output = solve(input).unwrap();
 
     // Part One
-    assert_eq!(output, "10".to_string());
+    // assert_eq!(output, "10".to_string());
+
+    // Part Two
+    assert_eq!(output, "4".to_string());
 }
 
 struct Reaction {
