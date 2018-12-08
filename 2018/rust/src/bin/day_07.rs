@@ -118,12 +118,10 @@ fn test_workers() {
     let worker = &mut workers.available()[0];
     worker.replace(('a', 5));
     assert_eq!(workers.0[0], Some(('a', 5)));
-    assert_eq!(workers.current_work(), vec![&'a']);
 
     let worker = &mut workers.available()[0];
     worker.replace(('b', 1));
     assert_eq!(workers.0[1], Some(('b', 1)));
-    assert_eq!(workers.current_work(), vec![&'a', &'b']);
 
     let steps = workers.tick();
     assert_eq!(workers.0[0], Some(('a', 4)));
