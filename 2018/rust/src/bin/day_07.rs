@@ -35,12 +35,12 @@ fn part_two<F: Fn(char) -> usize>(
     while !assembly.is_done() || workers.are_working() {
         for (worker, step_id) in workers.available().iter_mut().zip(assembly.available()) {
             worker.replace((step_id, step_time(step_id)));
-            assembly.start(&step_id);
+            assembly.start(step_id);
         }
 
         let done = workers.tick();
         for step_id in done {
-            assembly.finish(&step_id);
+            assembly.finish(step_id);
         }
 
         output += 1;
@@ -128,7 +128,7 @@ fn part_one(assembly: &mut Assembly) -> Vec<char> {
 
         output.push(done);
 
-        assembly.finish(&done);
+        assembly.finish(done);
     }
 
     output
@@ -179,14 +179,14 @@ impl Assembly {
             .collect()
     }
 
-    fn start(&mut self, step_id: &char) {
-        if let Some(step) = self.0.iter_mut().find(|x| &x.id == step_id) {
+    fn start(&mut self, step_id: char) {
+        if let Some(step) = self.0.iter_mut().find(|x| x.id == step_id) {
             step.state = State::InProgress;
         }
     }
 
-    fn finish(&mut self, step_id: &char) {
-        if let Some(step) = self.0.iter_mut().find(|x| &x.id == step_id) {
+    fn finish(&mut self, step_id: char) {
+        if let Some(step) = self.0.iter_mut().find(|x| x.id == step_id) {
             step.state = State::Finished;
         }
     }
