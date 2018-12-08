@@ -19,34 +19,19 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
-    let mut assembly: Assembly = input.parse()?;
-    let output = part_two(&mut assembly, 5, |x| (x as usize) - ('A' as usize) + 61);
+    let assembly: Assembly = input.parse()?;
+    let output = part_two(assembly, 5, |x| (x as usize) - ('A' as usize) + 61);
     Ok(output.to_string())
 }
 
-fn part_two<F: Fn(char) -> usize>(
-    assembly: &mut Assembly,
-    worker_count: usize,
-    step_time: F,
-) -> usize {
-    let mut workers = Workers(vec![None; worker_count]);
-
-    let mut output = 0;
-    while !assembly.is_done() || workers.are_working() {
-        for (worker, step_id) in workers.available().iter_mut().zip(assembly.available()) {
-            worker.replace((step_id, step_time(step_id)));
-            assembly.start(step_id);
-        }
-
-        let done = workers.tick();
-        for step_id in done {
-            assembly.finish(step_id);
-        }
-
-        output += 1;
+fn part_two<F: Fn(char) -> usize>(assembly: Assembly, worker_count: usize, step_time: F) -> usize {
+    let workers = Workers(vec![None; worker_count]);
+    PartTwo {
+        assembly,
+        workers,
+        step_time,
     }
-
-    output
+    .count()
 }
 
 #[test]
@@ -61,25 +46,50 @@ Step D must be finished before step E can begin.
 Step F must be finished before step E can begin.
     ";
 
-    let mut assembly: Assembly = input.parse().unwrap();
-    let output = part_two(&mut assembly, 2, |x| (x as usize) - ('A' as usize) + 1);
+    let assembly: Assembly = input.parse().unwrap();
+    let output = part_two(assembly, 2, |x| (x as usize) - ('A' as usize) + 1);
     assert_eq!(output, 15);
+}
+
+struct PartTwo<F> {
+    assembly: Assembly,
+    workers: Workers,
+    step_time: F,
+}
+
+impl<F: Fn(char) -> usize> Iterator for PartTwo<F> {
+    type Item = Vec<Option<char>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.assembly.is_done() {
+            return None;
+        }
+
+        for (worker, step_id) in self
+            .workers
+            .available()
+            .iter_mut()
+            .zip(self.assembly.available())
+        {
+            worker.replace((step_id, (self.step_time)(step_id)));
+            self.assembly.start(step_id);
+        }
+
+        let done = self.workers.tick();
+        for step_id in done {
+            self.assembly.finish(step_id);
+        }
+
+        Some(self.workers.0.iter().map(|x| x.map(|x| x.0)).collect())
+    }
 }
 
 #[derive(Debug)]
 struct Workers(Vec<Option<(char, usize)>>);
 
 impl Workers {
-    fn are_working(&self) -> bool {
-        !self.current_work().is_empty()
-    }
-
     fn available(&mut self) -> Vec<&mut Option<(char, usize)>> {
         self.0.iter_mut().filter(|x| x.is_none()).collect()
-    }
-
-    fn current_work(&self) -> Vec<&char> {
-        self.0.iter().flat_map(|x| x).map(|(x, _)| x).collect()
     }
 
     fn tick(&mut self) -> Vec<char> {
