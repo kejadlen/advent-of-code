@@ -2,6 +2,7 @@
 name = "advent_of_code_2018"
 version = "0.1.0"
 dependencies = [
+ "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest_derive 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
