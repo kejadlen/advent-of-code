@@ -1,5 +1,3 @@
-raw = ARGF.read.chomp.split(/\s+/).map(&:to_i)
-
 class Node
   def self.from(raw)
     child_count = raw.shift
@@ -30,5 +28,6 @@ class Node
   end
 end
 
+raw = ARGF.read.chomp.split(/\s+/).map(&:to_i)
 root = Node.from(raw)
 p root.value
