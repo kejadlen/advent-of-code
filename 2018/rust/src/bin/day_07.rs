@@ -3,20 +3,13 @@
 use std::cmp::{Ord, Ordering};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::io::{self, Read};
 use std::str::FromStr;
 
 use regex::Regex;
 
-fn main() -> Result<(), Box<Error>> {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input)?;
+use advent_of_code::main;
 
-    let output = solve(&input)?;
-    println!("{}", output);
-
-    Ok(())
-}
+main!();
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
     let assembly: Assembly = input.parse()?;
