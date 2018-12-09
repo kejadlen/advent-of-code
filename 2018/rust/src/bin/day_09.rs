@@ -62,11 +62,11 @@ fn play(player_count: usize, marble_count: usize) -> usize {
 #[test]
 fn test_play() {
     assert_eq!(play(9, 25), 32);
-    // assert_eq!(play(10, 1618), 8317);
+    assert_eq!(play(10, 1618), 8317);
     assert_eq!(play(13, 7999), 146373);
-    // assert_eq!(play(17, 1104), 2764);
-    // assert_eq!(play(21, 6111), 54718);
-    // assert_eq!(play(30, 5807), 37305);
+    assert_eq!(play(17, 1104), 2764);
+    assert_eq!(play(21, 6111), 54718);
+    assert_eq!(play(30, 5807), 37305);
 }
 
 // fn circle_to_string(circle: &Vec<Marble>) -> String {
