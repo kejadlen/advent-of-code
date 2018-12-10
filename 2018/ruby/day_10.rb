@@ -351,7 +351,7 @@ def print_points(points)
   max_y = points.map(&:position).map(&:last).max
 
   # return if max_x - min_x > 500
-  return if max_y - min_y > 100
+  return if max_y - min_y > 10
 
   h = points.each.with_object(Hash.new(?.)) {|point, h|
     h[point.position] = ?#
@@ -367,10 +367,13 @@ def print_points(points)
   gets
 end
 
+i = 0
 loop do
   print_points(points)
+  puts i
   points.each {|point|
     point.position[0] += point.velocity[0]
     point.position[1] += point.velocity[1]
   }
+  i += 1
 end
