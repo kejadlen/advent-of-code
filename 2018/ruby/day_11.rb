@@ -1,6 +1,4 @@
-# p ARGF.read.chomp.lines.map(&:chomp)
-
-INPUT = 7400
+INPUT = ARGF.read.chomp.to_i
 
 FuelCell = Struct.new(*%i[ x y ]) do
   def rack_id
@@ -19,27 +17,22 @@ FuelCell = Struct.new(*%i[ x y ]) do
 end
 
 grid = Hash.new(0)
-(1..300).each {|x|
-  (1..300).each {|y|
+(1..300).each do |x|
+  (1..300).each do |y|
     grid[[x,y]] = FuelCell.new(x, y).power_level
-  }
-}
-
-(44..48).each do |y|
-  (32..36).each do |x|
-    print " #{grid[[x,y]]} "
   end
-  puts
 end
 
 squares = Hash.new(0)
-(2..299).each {|x|
-  (2..299).each {|y|
-    power_level = [[-1, -1], [0, -1], [1, -1],
-                   [-1, 0], [0, 0], [1, 0],
-                   [-1, 1], [0, 1], [1, 1]].map {|(dx,dy)| grid[[x+dx, y+dy]] }.sum
-    squares[[x,y]] = power_level
+(1..300).each do |size|
+  (1..(300-size+1)).each {|x|
+    (1..(300-size+1)).each {|y|
+      deltas = (0...size).flat_map {|d| [[size-1, d], [d, size-1]] }
+      squares[[x,y,size]] = squares[[x,y,size-1]] + deltas.map {|(dx,dy)| grid[[x+dx, y+dy]] }.sum - grid[[x+size-1, y+size-1]]
+    }
   }
-}
 
-p squares.max_by(&:last)
+  puts "#{size}: #{squares.max_by(&:last)}"
+  squares.delete_if {|(_,_,s)| s < size }
+end
+
