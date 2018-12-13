@@ -12,5 +12,5 @@ macro_rules! main {
 
             Ok(())
         }
-    }
+    };
 }

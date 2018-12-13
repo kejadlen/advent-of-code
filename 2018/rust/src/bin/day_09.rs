@@ -7,7 +7,8 @@ use advent_of_code::main;
 main!();
 
 fn solve(input: &str) -> Result<String, Box<Error>> {
-    let re = Regex::new(r"(?P<players>\d+) players; last marble is worth (?P<points>\d+) points").unwrap();
+    let re = Regex::new(r"(?P<players>\d+) players; last marble is worth (?P<points>\d+) points")
+        .unwrap();
     let caps = re.captures(input).unwrap();
     let player_count = caps.name("players").unwrap().as_str().parse()?;
     let marble_count: usize = caps.name("points").unwrap().as_str().parse()?;
@@ -17,7 +18,11 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
 
 fn play(player_count: usize, marble_count: usize) -> usize {
     let mut scores = vec![0; player_count];
-    let mut circle = vec![Marble{value: 0, next: 0, prev: 0}];
+    let mut circle = vec![Marble {
+        value: 0,
+        next: 0,
+        prev: 0,
+    }];
 
     let mut current_player = 0;
     let mut current_index: usize = 0;
@@ -40,7 +45,7 @@ fn play(player_count: usize, marble_count: usize) -> usize {
             let current_marble = &circle[current_index];
             let next = current_marble.next;
             let prev = current_index;
-            let marble = Marble{value, next, prev};
+            let marble = Marble { value, next, prev };
             circle.push(marble);
             current_index = circle.len() - 1;
             circle[prev].next = current_index;
