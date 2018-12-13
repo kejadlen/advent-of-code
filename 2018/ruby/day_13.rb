@@ -107,14 +107,15 @@ loop do
     #   p y
     #   carts.delete_if {|cart| cart.x == x && cart.y == y }
     # end
-    if carts.size == 1
-      p carts
-      exit
-    end
     # if crashes.values.any? {|v| v > 1 }
     #   p crashes.find {|_,v| v > 1 }
     #   exit
     # end
+  end
+
+  if carts.size == 1
+    p carts
+    exit
   end
 
   # p carts
