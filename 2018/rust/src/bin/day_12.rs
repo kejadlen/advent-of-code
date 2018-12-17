@@ -16,7 +16,7 @@ fn solve(input: &str) -> Result<String, Box<Error>> {
     }
 
     let pots = generation.next().unwrap();
-    let indices: Vec<_> = pots.iter().filter(|(_,&v)| v).map(|(&k,_)| k).collect();
+    let indices: Vec<_> = pots.iter().filter(|(_, &v)| v).map(|(&k, _)| k).collect();
     let output: isize = indices.iter().sum();
 
     Ok(output.to_string())
