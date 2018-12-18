@@ -274,25 +274,13 @@ fn test_unit() {
         .iter()
         .map(|&x| Square(x))
         .all(|x| reachable.contains_key(&x)));
+
+    let chosen = unit.chosen(&square, &map);
+    assert_eq!(chosen.unwrap().0, (1, 3));
 }
 
 #[test]
 fn test_unit_chosen() {
-    let map: Map = r"
-#######
-#E..G.#
-#...#.#
-#.G.#G#
-#######
-    "
-    .parse()
-    .unwrap();
-
-    let square = Square((1, 1));
-    let unit = map.units.get(&square).unwrap();
-    let chosen = unit.chosen(&square, &map);
-    assert_eq!(chosen.unwrap().0, (1, 3));
-
     let map: Map = r"
 #######
 #.E...#
@@ -305,6 +293,7 @@ fn test_unit_chosen() {
 
     let square = Square((1, 2));
     let unit = map.units.get(&square).unwrap();
+
     let chosen = unit.chosen(&square, &map);
     assert_eq!(chosen.unwrap().0, (2, 4));
 }
