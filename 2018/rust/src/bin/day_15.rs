@@ -217,12 +217,25 @@ impl Unit {
             .collect()
     }
 
-    fn reachable(&self, square: &Square, map: &Map) -> HashSet<Square> {
-        let distances = map.distances(square);
-        self.in_range(&map)
+    fn reachable(&self, square: &Square, map: &Map) -> HashMap<Square, usize> {
+        let in_range = self.in_range(&map);
+        map.distances(square)
             .into_iter()
-            .filter(|x| distances.contains_key(x))
+            .filter(|(x, _)| in_range.contains(x))
             .collect()
+    }
+
+    fn next_step(&self, square: &Square, map: &Map) -> Option<Square> {
+        self.reachable(&square, &map)
+            .into_iter()
+            .fold(HashMap::new(), |mut m, (s, d)| {
+                let v = m.entry(d).or_insert_with(Vec::new);
+                v.push(s);
+                m
+            })
+            .iter()
+            .min_by_key(|(&x, _)| x)
+            .and_then(|(_, x)| x.iter().min().cloned()) // Is there a way to avoid this clone?
     }
 }
 
@@ -260,7 +273,10 @@ fn test_unit_targets() {
     assert!(vec![(1, 3), (2, 2), (3, 1), (3, 3)]
         .iter()
         .map(|&x| Square(x))
-        .all(|x| reachable.contains(&x)));
+        .all(|x| reachable.contains_key(&x)));
+
+    let next_step = unit.next_step(&square, &map);
+    assert_eq!(next_step.unwrap().0, (1, 3));
 }
 
 #[derive(Debug, Eq, PartialEq)]
