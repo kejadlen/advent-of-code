@@ -237,6 +237,24 @@ impl Unit {
             .min_by_key(|(&x, _)| x)
             .and_then(|(_, x)| x.iter().min().cloned()) // Is there a way to avoid this clone?
     }
+
+    fn next_step(&self, square: &Square, map: &Map) -> Option<Square> {
+        self.chosen(square, map).as_ref().and_then(|x| {
+            let distances = map.distances(x);
+            map.open_neighbors(square)
+                .into_iter()
+                .fold(HashMap::new(), |mut m, x| {
+                    if let Some(distance) = distances.get(&x) {
+                        let v = m.entry(distance).or_insert_with(Vec::new);
+                        v.push(x);
+                    }
+                    m
+                })
+                .iter()
+                .min_by_key(|(&x, _)| x)
+                .and_then(|(_, x)| x.iter().min().cloned()) // Is there a way to avoid this clone?
+        })
+    }
 }
 
 #[test]
@@ -280,7 +298,7 @@ fn test_unit() {
 }
 
 #[test]
-fn test_unit_chosen() {
+fn test_unit_next_step() {
     let map: Map = r"
 #######
 #.E...#
@@ -294,8 +312,8 @@ fn test_unit_chosen() {
     let square = Square((1, 2));
     let unit = map.units.get(&square).unwrap();
 
-    let chosen = unit.chosen(&square, &map);
-    assert_eq!(chosen.unwrap().0, (2, 4));
+    let next_step = unit.next_step(&square, &map);
+    assert_eq!(next_step.unwrap().0, (1, 3));
 }
 
 #[derive(Debug, Eq, PartialEq)]
