@@ -30,9 +30,8 @@ impl Map {
     fn open_neighbors(&self, square: &Square) -> HashSet<Square> {
         square
             .neighbors()
-            .iter()
+            .into_iter()
             .filter(|x| self.is_open(x))
-            .map(|&x| x)
             .collect()
     }
 
@@ -57,13 +56,15 @@ impl Map {
 
         let mut distances = HashMap::new();
         let mut queue = BinaryHeap::new();
-        queue.push(State{distance: 0, square: *from});
+        queue.push(State {
+            distance: 0,
+            square: *from,
+        });
 
-        while let Some(State {distance, square}) = queue.pop() {
+        while let Some(State { distance, square }) = queue.pop() {
             distances.entry(square).or_insert(distance);
 
-            self
-                .open_neighbors(&square)
+            self.open_neighbors(&square)
                 .iter()
                 .filter(|x| !distances.contains_key(x))
                 .map(|&x| State {
@@ -215,6 +216,14 @@ impl Unit {
             .flat_map(|x| map.open_neighbors(x))
             .collect()
     }
+
+    fn reachable(&self, square: &Square, map: &Map) -> HashSet<Square> {
+        let distances = map.distances(square);
+        self.in_range(&map)
+            .into_iter()
+            .filter(|x| distances.contains_key(x))
+            .collect()
+    }
 }
 
 #[test]
@@ -245,6 +254,13 @@ fn test_unit_targets() {
         .iter()
         .map(|&x| Square(x))
         .all(|x| in_range.contains(&x)));
+
+    let reachable = unit.reachable(&square, &map);
+    assert_eq!(reachable.len(), 4);
+    assert!(vec![(1, 3), (2, 2), (3, 1), (3, 3)]
+        .iter()
+        .map(|&x| Square(x))
+        .all(|x| reachable.contains(&x)));
 }
 
 #[derive(Debug, Eq, PartialEq)]
