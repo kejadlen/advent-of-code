@@ -225,7 +225,7 @@ impl Unit {
             .collect()
     }
 
-    fn next_step(&self, square: &Square, map: &Map) -> Option<Square> {
+    fn chosen(&self, square: &Square, map: &Map) -> Option<Square> {
         self.reachable(&square, &map)
             .into_iter()
             .fold(HashMap::new(), |mut m, (s, d)| {
@@ -240,7 +240,7 @@ impl Unit {
 }
 
 #[test]
-fn test_unit_targets() {
+fn test_unit() {
     let map: Map = r"
 #######
 #E..G.#
@@ -274,9 +274,39 @@ fn test_unit_targets() {
         .iter()
         .map(|&x| Square(x))
         .all(|x| reachable.contains_key(&x)));
+}
 
-    let next_step = unit.next_step(&square, &map);
-    assert_eq!(next_step.unwrap().0, (1, 3));
+#[test]
+fn test_unit_chosen() {
+    let map: Map = r"
+#######
+#E..G.#
+#...#.#
+#.G.#G#
+#######
+    "
+    .parse()
+    .unwrap();
+
+    let square = Square((1, 1));
+    let unit = map.units.get(&square).unwrap();
+    let chosen = unit.chosen(&square, &map);
+    assert_eq!(chosen.unwrap().0, (1, 3));
+
+    let map: Map = r"
+#######
+#.E...#
+#.....#
+#...G.#
+#######
+    "
+    .parse()
+    .unwrap();
+
+    let square = Square((1, 2));
+    let unit = map.units.get(&square).unwrap();
+    let chosen = unit.chosen(&square, &map);
+    assert_eq!(chosen.unwrap().0, (2, 4));
 }
 
 #[derive(Debug, Eq, PartialEq)]
