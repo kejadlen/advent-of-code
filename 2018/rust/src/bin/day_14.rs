@@ -4,40 +4,63 @@ use advent_of_code::main;
 
 main!();
 
-fn solve(_input: &str) -> Result<String, Box<Error>> {
+fn solve(input: &str) -> Result<String, Box<Error>> {
     let elves = vec![0, 1];
-    let recipes = vec![3, 7];
-    let mut scoreboard = Scoreboard { elves, recipes };
+    let recipes = "37".into();
+    let scoreboard = Scoreboard { elves, recipes };
 
-    let n = 919_901;
-    let recipes = scoreboard.find(|x| x.len() > n + 9).unwrap();
-    let score: String = recipes[n..n + 10].iter().map(|&x| x.to_string()).collect();
+    let needle = input;
+    // let recipes = scoreboard.find(|x| x.len() > n + 9).unwrap();
+    // let score: String = recipes[n..n + 10].iter().map(|&x| x.to_string()).collect();
 
-    Ok(score)
+    let n = scoreboard
+        .scan(0, |n, recipes| {
+            let seen = *n;
+            *n = recipes
+                .len()
+                .checked_sub(needle.len() - 1)
+                .unwrap_or_else(|| 0);
+            Some((seen, recipes[seen..recipes.len()].to_string()))
+        })
+        // .inspect(|x| println!("{:?}", x))
+        .flat_map(|(n, x)| x.find(needle).map(|i| n + i))
+        .next()
+        .unwrap();
+
+    Ok(n.to_string())
+}
+
+#[test]
+fn test_solve() {
+    // Part Two
+    assert_eq!(&solve("51589").unwrap(), "9");
+    assert_eq!(&solve("01245").unwrap(), "5");
+    assert_eq!(&solve("92510").unwrap(), "18");
+    assert_eq!(&solve("59414").unwrap(), "2018");
 }
 
 #[derive(Debug)]
 struct Scoreboard {
     elves: Vec<usize>,
-    recipes: Vec<usize>,
+    recipes: String,
 }
 
 impl Iterator for Scoreboard {
-    type Item = Vec<usize>;
+    type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.elves
-            .iter()
-            .map(|&x| self.recipes[x])
-            .sum::<usize>()
-            .to_string()
-            .chars()
-            .map(|x| x.to_digit(10).unwrap() as usize)
-            .for_each(|x| self.recipes.push(x));
+        self.recipes.push_str(
+            &self
+                .elves
+                .iter()
+                .map(|&x| self.recipes[x..=x].parse::<usize>().unwrap())
+                .sum::<usize>()
+                .to_string(),
+        );
         self.elves = self
             .elves
             .iter()
-            .map(|&x| (1 + self.recipes[x] + x) % self.recipes.len())
+            .map(|&x| (1 + self.recipes[x..=x].parse::<usize>().unwrap() + x) % self.recipes.len())
             .collect();
 
         Some(self.recipes.clone())
@@ -47,9 +70,9 @@ impl Iterator for Scoreboard {
 #[test]
 fn test_scoreboard() {
     let elves = vec![0, 1];
-    let recipes = vec![3, 7];
+    let recipes = "37".into();
     let mut scoreboard = Scoreboard { elves, recipes };
 
     let recipes = scoreboard.next().unwrap();
-    assert_eq!(recipes, vec![3, 7, 1, 0]);
+    assert_eq!(recipes, "3710");
 }
