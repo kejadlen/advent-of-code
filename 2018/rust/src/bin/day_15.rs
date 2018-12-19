@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::error::Error;
+use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use advent_of_code::main;
@@ -15,14 +16,118 @@ struct Combat {
     map: Map,
 }
 
-impl Combat {}
+impl Combat {
+    fn initiative(&self) -> Vec<(Square, Unit)> {
+        let mut initiative: Vec<_> = self.map.units.iter().map(|(&k, &v)| (k, v)).collect();
+        initiative.sort_by_key(|(x, _)| *x);
+        initiative
+    }
 
+    fn move_unit(&mut self, from: &Square, to: &Square) {
+        let unit = self.map.units.remove(from).unwrap();
+        self.map.units.insert(*to, unit);
+    }
+}
+
+impl Iterator for Combat {
+    type Item = Map;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for (square, unit) in self.initiative() {
+            if let Some(next_step) = unit.next_step(&square, &self.map) {
+                println!("{:?} -> {:?}", square, next_step);
+                self.move_unit(&square, &next_step);
+            }
+        }
+
+        Some(self.map.clone())
+    }
+}
+
+#[test]
+fn test_combat() {
+    let map: Map = r"
+#########
+#G..G..G#
+#.......#
+#.......#
+#G..E..G#
+#.......#
+#.......#
+#G..G..G#
+#########
+    "
+    .parse()
+    .unwrap();
+
+    let mut combat = Combat { map };
+
+    let map = combat.next().unwrap();
+    assert_eq!(
+        format!("{}", map),
+        r"
+#########
+#.G...G.#
+#...G...#
+#...E..G#
+#.G.....#
+#.......#
+#G..G..G#
+#.......#
+#########
+        "
+        .trim()
+        .to_string()
+    );
+
+    let map = combat.next().unwrap();
+    assert_eq!(
+        format!("{}", map),
+        r"
+#########
+#..G.G..#
+#...G...#
+#.G.E.G.#
+#.......#
+#G..G..G#
+#.......#
+#.......#
+#########
+        "
+        .trim()
+        .to_string()
+    );
+
+    let map = combat.next().unwrap();
+    assert_eq!(
+        format!("{}", map),
+        r"
+#########
+#.......#
+#..GGG..#
+#..GEG..#
+#G..G...#
+#......G#
+#.......#
+#.......#
+#########
+        "
+        .trim()
+        .to_string()
+    );
+}
+
+#[derive(Clone)]
 struct Map {
     walls: HashSet<Square>,
     units: HashMap<Square, Unit>,
 }
 
 impl Map {
+    fn squares(&self) -> impl Iterator<Item = &Square> {
+        self.walls.iter().chain(self.units.keys())
+    }
+
     fn is_open(&self, square: &Square) -> bool {
         !self.walls.contains(&square) && !self.units.contains_key(&square)
     }
@@ -75,6 +180,33 @@ impl Map {
         }
 
         distances
+    }
+}
+
+impl Display for Map {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        let min_y = self.squares().map(|x| (x.0).0).min().unwrap();
+        let max_y = self.squares().map(|x| (x.0).0).max().unwrap();
+        let min_x = self.squares().map(|x| (x.0).1).min().unwrap();
+        let max_x = self.squares().map(|x| (x.0).1).max().unwrap();
+        let mut out = String::new();
+        for y in min_y..=max_y {
+            for x in min_x..=max_x {
+                let square = Square((y, x));
+                out.push(if self.walls.contains(&square) {
+                    '#'
+                } else if let Some(Unit { race, .. }) = self.units.get(&square) {
+                    match race {
+                        Race::Elf => 'E',
+                        Race::Goblin => 'G',
+                    }
+                } else {
+                    '.'
+                })
+            }
+            out.push('\n');
+        }
+        write!(f, "{}", out.trim())
     }
 }
 
@@ -191,6 +323,7 @@ fn test_square_ord() {
     );
 }
 
+#[derive(Clone, Copy, Debug)]
 struct Unit {
     race: Race,
     hp: usize,
@@ -210,15 +343,19 @@ impl Unit {
             .collect()
     }
 
-    fn in_range(&self, map: &Map) -> HashSet<Square> {
-        self.targets(&map)
-            .iter()
+    fn in_range(&self, square: &Square, map: &Map) -> HashSet<Square> {
+        let targets = self.targets(&map);
+        if square.neighbors().iter().any(|x| targets.contains(x)) {
+            return HashSet::new();
+        }
+
+        targets.iter()
             .flat_map(|x| map.open_neighbors(x))
             .collect()
     }
 
     fn reachable(&self, square: &Square, map: &Map) -> HashMap<Square, usize> {
-        let in_range = self.in_range(&map);
+        let in_range = self.in_range(square, map);
         map.distances(square)
             .into_iter()
             .filter(|(x, _)| in_range.contains(x))
@@ -279,7 +416,7 @@ fn test_unit() {
         .map(|&x| Square(x))
         .all(|x| targets.contains(&x)));
 
-    let in_range = unit.in_range(&map);
+    let in_range = unit.in_range(&square, &map);
     assert_eq!(in_range.len(), 6);
     assert!(vec![(1, 3), (1, 5), (2, 2), (2, 5), (3, 1), (3, 3)]
         .iter()
@@ -316,7 +453,7 @@ fn test_unit_next_step() {
     assert_eq!(next_step.unwrap().0, (1, 3));
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Race {
     Elf,
     Goblin,
