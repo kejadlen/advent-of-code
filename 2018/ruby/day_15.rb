@@ -35,7 +35,7 @@ class Combat
           unit = @map.fetch(turn.pos)
           target = @map.fetch(attack)
           target.hp -= @attack.fetch(unit.class)
-          @map.delete(attack) if target.hp < 0
+          @map.delete(attack) if target.hp <= 0
         end
       end
 
@@ -423,19 +423,31 @@ class Goblin < Unit
 end
 
 def solve(input)
-  map = Map.parse(input)
-  combat = Combat.new(map, 3)
+  (3..Float::INFINITY).each do |elf_attack|
+    map = Map.parse(input)
+    outcome = simulate(map, elf_attack)
+    next if outcome.nil?
+    return outcome
+  end
+end
+
+def simulate(map, elf_attack)
+  elf_count = map.units.count {|_, unit| unit.is_a?(Elf) }
+  combat = Combat.new(map, elf_attack)
   map, count = combat.fight.map.with_index
     .inject(nil) {|last,(map,count)|
+      return if map.units.count {|_, unit| unit.is_a?(Elf) } < elf_count
       # puts map, map.units.values.map(&:to_s).inspect
       [map, count]
-    }
-  outcome = map.units.values.map(&:hp).sum * count
+  }
+  return if map.units.count {|_, unit| unit.is_a?(Elf) } < elf_count
+  map.units.values.map(&:hp).sum * count
 end
 
 class TestSolve < Minitest::Test
   def test_solve
-    assert_equal 27730, solve(<<~INPUT)
+    # assert_equal 27730, solve(<<~INPUT)
+    assert_equal 4988, solve(<<~INPUT)
       #######
       #.G...#
       #...EG#
@@ -445,17 +457,18 @@ class TestSolve < Minitest::Test
       #######
     INPUT
 
-    assert_equal 36334, solve(<<~INPUT)
-      #######
-      #G..#E#
-      #E#E.E#
-      #G.##.#
-      #...#E#
-      #...E.#
-      #######
-    INPUT
+    # assert_equal 36334, solve(<<~INPUT)
+      ########
+      ##G..#E#
+      ##E#E.E#
+      ##G.##.#
+      ##...#E#
+      ##...E.#
+      ########
+    #INPUT
 
-    assert_equal 39514, solve(<<~INPUT)
+    # assert_equal 39514, solve(<<~INPUT)
+    assert_equal 31284, solve(<<~INPUT)
       #######
       #E..EG#
       #.#G.E#
@@ -465,7 +478,8 @@ class TestSolve < Minitest::Test
       #######
     INPUT
 
-    assert_equal 27755, solve(<<~INPUT)
+    # assert_equal 27755, solve(<<~INPUT)
+    assert_equal 3478, solve(<<~INPUT)
       #######
       #E.G#.#
       #.#G..#
@@ -475,7 +489,8 @@ class TestSolve < Minitest::Test
       #######
     INPUT
 
-    assert_equal 28944, solve(<<~INPUT)
+    # assert_equal 28944, solve(<<~INPUT)
+    assert_equal 6474, solve(<<~INPUT)
       #######
       #.E...#
       #.#..G#
@@ -485,7 +500,8 @@ class TestSolve < Minitest::Test
       #######
     INPUT
 
-    assert_equal 18740, solve(<<~INPUT)
+    # assert_equal 18740, solve(<<~INPUT)
+    assert_equal 1140, solve(<<~INPUT)
       #########
       #G......#
       #.E.#...#
