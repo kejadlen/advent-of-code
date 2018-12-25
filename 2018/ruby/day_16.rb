@@ -13,10 +13,10 @@ OPCODES = {
   setr: ->(a, b, c) { ->(registers) { registers[c] = registers[a] } },
   seti: ->(a, b, c) { ->(registers) { registers[c] = a } },
   gtir: ->(a, b, c) { ->(registers) { registers[c] = (a > registers[b]) ? 1 : 0 } },
-  gtri: ->(a, b, c) { ->(registers) { registers[c] = (a > b) ? 1 : 0 } },
+  gtri: ->(a, b, c) { ->(registers) { registers[c] = (registers[a] > b) ? 1 : 0 } },
   gtrr: ->(a, b, c) { ->(registers) { registers[c] = (registers[a] > registers[b]) ? 1 : 0 } },
   eqir: ->(a, b, c) { ->(registers) { registers[c] = (a == registers[b]) ? 1 : 0 } },
-  eqri: ->(a, b, c) { ->(registers) { registers[c] = (a == b) ? 1 : 0 } },
+  eqri: ->(a, b, c) { ->(registers) { registers[c] = (registers[a] == b) ? 1 : 0 } },
   eqrr: ->(a, b, c) { ->(registers) { registers[c] = (registers[a] == registers[b]) ? 1 : 0 } },
 }
 
