@@ -1,10 +1,11 @@
 require "set"
 
 require "minitest"
+require "minitest/pride"
+
+class EndCombat < StandardError; end
 
 class Combat
-  class EndCombat < StandardError; end
-
   def initialize(map)
     @map = map
   end
@@ -12,12 +13,32 @@ class Combat
   def fight
     return enum_for(__method__) unless block_given?
 
-    turn_order.each do |pos|
-    end
+    yield @map
 
-    yield @map
+    loop do
+      turn_order.each do |pos|
+        next if @map[pos].nil? # don't take a turn for units that just died
+
+        turn = Turn.new(@map, pos)
+
+        if move = turn.move
+          unit = @map.delete(pos)
+          @map[move] = unit
+          turn.pos = move
+        end
+
+        if attack = turn.attack
+          unit = @map.fetch(turn.pos)
+          target = @map.fetch(attack)
+          target.hp -= unit.attack
+          @map.delete(attack) if target.hp < 0
+        end
+      end
+
+      yield @map
+    end
   rescue EndCombat
-    yield @map
+    # yield @map
   end
 
   def turn_order
@@ -26,7 +47,7 @@ class Combat
 end
 
 class TestCombat < Minitest::Test
-  def test_fight
+  def test_move
     map = Map.parse(<<~MAP)
       #########
       #G..G..G#
@@ -40,9 +61,9 @@ class TestCombat < Minitest::Test
     MAP
     combat = Combat.new(map)
     rounds = combat.fight
+    rounds.next # skip the first round
 
-    map = rounds.next
-    assert_equal <<~MAP.chomp, map.to_s
+    assert_equal <<~MAP.chomp, rounds.next.to_s
       #########
       #.G...G.#
       #...G...#
@@ -52,6 +73,60 @@ class TestCombat < Minitest::Test
       #G..G..G#
       #.......#
       #########
+    MAP
+
+    assert_equal <<~MAP.chomp, rounds.next.to_s
+      #########
+      #..G.G..#
+      #...G...#
+      #.G.E.G.#
+      #.......#
+      #G..G..G#
+      #.......#
+      #.......#
+      #########
+    MAP
+
+    assert_equal <<~MAP.chomp, rounds.next.to_s
+      #########
+      #.......#
+      #..GGG..#
+      #..GEG..#
+      #G..G...#
+      #......G#
+      #.......#
+      #.......#
+      #########
+    MAP
+  end
+
+  def test_fight
+    map = Map.parse(<<~MAP)
+      #######
+      #.G...#
+      #...EG#
+      #.#.#G#
+      #..G#E#
+      #.....#
+      #######
+    MAP
+    combat = Combat.new(map)
+    rounds = combat.fight
+    rounds.next # skip the initial state
+    rounds.next # skip the first found
+
+    map = rounds.next # second round
+    assert_equal 188, map.fetch(Position[2,4]).hp
+
+    20.times { rounds.next }
+    assert_equal <<~MAP.chomp, rounds.next.to_s
+      #######
+      #...G.#
+      #..G.G#
+      #.#.#G#
+      #...#E#
+      #.....#
+      #######
     MAP
   end
 
@@ -71,6 +146,8 @@ class TestCombat < Minitest::Test
 end
 
 class Turn
+  attr_accessor :pos
+
   def initialize(map, pos)
     @map, @pos = map, pos
     @unit = @map.fetch(@pos)
@@ -79,6 +156,7 @@ class Turn
   def move
     raise EndCombat if targets.empty?
     return if can_attack?
+    return if nearest.empty?
 
     chosen = nearest.min
     haystack = @map.in_range(@pos)
@@ -88,12 +166,20 @@ class Turn
       .first
   end
 
+  def attack
+    attackable.min_by {|pos, target| [target.hp, pos] }&.first
+  end
+
   def targets
     @map.units.select {|_, other| other.is_a?(@unit.enemy) }
   end
 
+  def attackable
+    targets.select {|pos, _| @pos.adjacent.include?(pos) }
+  end
+
   def can_attack?
-    @map.in_range(@pos).any? {|pos| targets.has_key?(pos) }
+    !attackable.empty?
   end
 
   def in_range
@@ -109,6 +195,8 @@ class Turn
     reachable.each do |pos, distance|
       nearest[distance] << pos
     end
+
+    return [] if nearest.empty?
     nearest.min_by(&:first).last
   end
 
@@ -199,8 +287,16 @@ class Map
     @occupied[pos]
   end
 
+  def []=(pos, square)
+    @occupied[pos] = square
+  end
+
   def fetch(pos)
     @occupied.fetch(pos)
+  end
+
+  def delete(pos)
+    @occupied.delete(pos)
   end
 
   def units
@@ -208,9 +304,8 @@ class Map
   end
 
   def in_range(pos)
-    [-1, 1]
-      .flat_map {|d| [[pos.y, pos.x+d], [pos.y+d, pos.x]] }
-      .map {|pos| Position[*pos] }
+    pos
+      .adjacent
       .reject {|pos| @occupied.has_key?(pos) }
   end
 
@@ -281,12 +376,33 @@ Position = Struct.new(:y, :x) do
     [self.y, self.x] <=> [other.y, other.x]
   end
 
+  def adjacent
+    [-1, 1]
+      .flat_map {|d| [[y, x+d], [y+d, x]] }
+      .map {|pos| Position[*pos] }
+  end
+
   def to_a
     [y, x]
+  end
+
+  def to_s
+    to_a.to_s
   end
 end
 
 class Unit
+  attr_reader :attack
+  attr_accessor :hp
+
+  def initialize
+    @attack = 3
+    @hp = 200
+  end
+
+  def to_s
+    "#{self.class.name.chars.first}(#{hp})"
+  end
 end
 
 class Wall
@@ -304,8 +420,85 @@ class Goblin < Unit
   end
 end
 
+def solve(input)
+  map = Map.parse(input)
+  combat = Combat.new(map)
+  map, count = combat.fight.map.with_index
+    .inject(nil) {|last,(map,count)|
+      # puts map, map.units.values.map(&:to_s).inspect
+      [map, count]
+    }
+  outcome = map.units.values.map(&:hp).sum * count
+end
+
+class TestSolve < Minitest::Test
+  def test_solve
+    assert_equal 27730, solve(<<~INPUT)
+      #######
+      #.G...#
+      #...EG#
+      #.#.#G#
+      #..G#E#
+      #.....#
+      #######
+    INPUT
+
+    assert_equal 36334, solve(<<~INPUT)
+      #######
+      #G..#E#
+      #E#E.E#
+      #G.##.#
+      #...#E#
+      #...E.#
+      #######
+    INPUT
+
+    assert_equal 39514, solve(<<~INPUT)
+      #######
+      #E..EG#
+      #.#G.E#
+      #E.##E#
+      #G..#.#
+      #..E#.#
+      #######
+    INPUT
+
+    assert_equal 27755, solve(<<~INPUT)
+      #######
+      #E.G#.#
+      #.#G..#
+      #G.#.G#
+      #G..#.#
+      #...E.#
+      #######
+    INPUT
+
+    assert_equal 28944, solve(<<~INPUT)
+      #######
+      #.E...#
+      #.#..G#
+      #.###.#
+      #E#G#G#
+      #...#G#
+      #######
+    INPUT
+
+    assert_equal 18740, solve(<<~INPUT)
+      #########
+      #G......#
+      #.E.#...#
+      #..##..G#
+      #...##..#
+      #...#...#
+      #.G...G.#
+      #.....G.#
+      #########
+    INPUT
+  end
+end
+
 if __FILE__ == $0
   require "minitest/autorun" and exit if ENV["TEST"]
 
-
+  puts solve(ARGF.read)
 end
