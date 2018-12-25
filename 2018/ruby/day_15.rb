@@ -6,8 +6,12 @@ require "minitest/pride"
 class EndCombat < StandardError; end
 
 class Combat
-  def initialize(map)
+  def initialize(map, elf_attack)
     @map = map
+    @attack = {
+      Elf => elf_attack,
+      Goblin => 3,
+    }
   end
 
   def fight
@@ -30,7 +34,7 @@ class Combat
         if attack = turn.attack
           unit = @map.fetch(turn.pos)
           target = @map.fetch(attack)
-          target.hp -= unit.attack
+          target.hp -= @attack.fetch(unit.class)
           @map.delete(attack) if target.hp < 0
         end
       end
@@ -59,7 +63,7 @@ class TestCombat < Minitest::Test
       #G..G..G#
       #########
     MAP
-    combat = Combat.new(map)
+    combat = Combat.new(map, 3)
     rounds = combat.fight
     rounds.next # skip the first round
 
@@ -110,7 +114,7 @@ class TestCombat < Minitest::Test
       #.....#
       #######
     MAP
-    combat = Combat.new(map)
+    combat = Combat.new(map, 3)
     rounds = combat.fight
     rounds.next # skip the initial state
     rounds.next # skip the first found
@@ -138,7 +142,7 @@ class TestCombat < Minitest::Test
       #.G.E.#
       #######
     MAP
-    combat = Combat.new(map)
+    combat = Combat.new(map, 3)
 
     expected = [[1,2], [1,4], [2,1], [2,3], [2,5], [3,2], [3,4]].map {|pos| Position[*pos]}
     assert_equal expected, combat.turn_order
@@ -392,11 +396,9 @@ Position = Struct.new(:y, :x) do
 end
 
 class Unit
-  attr_reader :attack
   attr_accessor :hp
 
   def initialize
-    @attack = 3
     @hp = 200
   end
 
@@ -422,7 +424,7 @@ end
 
 def solve(input)
   map = Map.parse(input)
-  combat = Combat.new(map)
+  combat = Combat.new(map, 3)
   map, count = combat.fight.map.with_index
     .inject(nil) {|last,(map,count)|
       # puts map, map.units.values.map(&:to_s).inspect
