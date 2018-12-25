@@ -74,6 +74,7 @@ class Slice
   end
 
   def water
+    @squares.select {|_, s| %w[ | ~ ].include?(s) }.keys
   end
 
   def to_s
@@ -120,7 +121,7 @@ class TestSlice < Minitest::Test
   def test_simulate
     simulation = @slice.simulate
 
-    slice = 5.times { simulation.next }
+    5.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -138,7 +139,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    slice = 6.times { simulation.next }
+    6.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -156,7 +157,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    slice = 5.times { simulation.next }
+    5.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -174,7 +175,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    slice = 4.times { simulation.next }
+    4.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -192,7 +193,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    slice = 24.times { simulation.next }
+    24.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -210,7 +211,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    slice = 9.times { simulation.next }
+    9.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -227,6 +228,8 @@ class TestSlice < Minitest::Test
       ...|#~~~~~#|..
       ...|#######|..
     SLICE
+
+    assert_equal 57, @slice.water.count
   end
 end
 
