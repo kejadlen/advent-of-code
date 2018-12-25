@@ -74,7 +74,7 @@ class Slice
   end
 
   def water
-    @squares.select {|_, s| %w[ | ~ ].include?(s) }.keys
+    @squares.select {|_, s| %w[ | ~ ].include?(s) }
   end
 
   def to_s
@@ -248,7 +248,10 @@ def solve(input)
   # min_y = [0, min_y].min
   # puts (min_y..max_y).map {|y| (min_x-1..max_x+1).map {|x| slice.squares.fetch([x, y]) { ?. } }.join }.join(?\n)
 
-  slice.water.count {|_,y| y >= min_y }
+  # Part One
+  # slice.water.count {|(_,y),_| y >= min_y }
+
+  slice.water.count {|_,s| s == ?~ }
 end
 
 if __FILE__ == $0
