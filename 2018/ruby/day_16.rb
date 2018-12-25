@@ -52,19 +52,44 @@ def solve(input)
                        ((?~\n))\n
                        After:\s*((?~\n))\n
                        /mx)
-  samples.count {|sample|
-    before = sample[0].scan(/\d+/).map(&:to_i)
-    opcode = sample[1].scan(/\d+/).map(&:to_i)
-    after = sample[2].scan(/\d+/).map(&:to_i)
-    _, *args = opcode
 
-    opcode_count = OPCODES.count {|_, instruction|
+  valid_opcodes = samples.map do |sample|
+    before = sample[0].scan(/\d+/).map(&:to_i)
+    instruction = sample[1].scan(/\d+/).map(&:to_i)
+    after = sample[2].scan(/\d+/).map(&:to_i)
+    opcode, *args = instruction
+
+    opcodes = OPCODES.select {|_, instruction|
       registers = before.dup
       instruction[*args][registers]
       registers == after
-    }
-    opcode_count >= 3
-  }
+    }.map(&:first)
+    [opcode, opcodes]
+  end
+
+  # Part One
+  # return valid_opcodes.count {|_,opcodes| opcodes.length >= 3 }
+
+  opcode_map = {}
+  until opcode_map.length == OPCODES.length
+    number, opcodes = valid_opcodes.find {|_,opcodes| opcodes.length == 1 }
+    opcode = opcodes[0]
+    opcode_map[number] = opcode
+
+    valid_opcodes.delete_if {|n,_| n == number }
+    valid_opcodes.each do |_,opcodes|
+      opcodes.delete(opcode)
+    end
+  end
+
+  program = input[/[\d\s]+\Z/].lines.map {|line| line.scan(/\d+/).map(&:to_i) }.reject(&:empty?)
+  registers = [0, 0, 0, 0]
+  program.each do |instruction|
+    number, *args = instruction
+    opcode = opcode_map.fetch(number)
+    OPCODES.fetch(opcode)[*args][registers]
+  end
+  registers[0]
 end
 
 if __FILE__ == $0
