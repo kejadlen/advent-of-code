@@ -15,6 +15,8 @@ class Slice
     new(squares)
   end
 
+  attr_reader :squares
+
   def initialize(squares)
     @squares = squares
     @squares[[500, 0]] = ?+
@@ -27,7 +29,6 @@ class Slice
     max_y = @squares.keys.map(&:last).max
 
     loop do
-      settled = []
       @active.to_a.each do |pos|
         @active.delete(pos)
         x, y = pos
@@ -36,38 +37,37 @@ class Slice
           @squares[[x, y+1]] = ?|
           @active << [x, y+1]
         when ?|
+          next if y+1 > max_y
+
           if @squares[[x, y+1]].nil?
-            if y+1 <= max_y
-              @squares[[x, y+1]] = ?|
-              @active << [x, y+1]
-            end
+            @squares[[x, y+1]] = ?|
+            @active << [x, y+1]
           else
-            left = @squares[[x-1, y]].nil?
-            right = @squares[[x+1, y]].nil?
-            if !left && !right
-              settled << [x, y]
-            end
-            if left
+            if @squares[[x-1, y]].nil?
               @squares[[x-1, y]] = ?|
               @active << [x-1, y]
             end
-            if right
+
+            if @squares[[x+1, y]].nil?
               @squares[[x+1, y]] = ?|
               @active << [x+1, y]
+            end
+
+            left_x = x-1
+            left_x -= 1 until @squares[[left_x, y]] != ?|
+            right_x = x+1
+            right_x += 1 until @squares[[right_x, y]] != ?|
+            if @squares[[left_x, y]] == ?# && @squares[[right_x, y]] == ?#
+              (left_x+1..right_x-1).each do |x|
+                @squares[[x, y]] = ?~
+                @active << [x, y-1] if @squares[[x, y-1]] == ?|
+              end
             end
           end
         end
       end
 
-      if @active.empty?
-        while pos = settled.shift
-          @squares[pos] = ?~ if @squares[pos] == ?|
-          x, y = pos
-          @active << [x, y-1] if @squares[[x, y-1]] == ?|
-          settled << [x-1, y] if @squares[[x-1, y]] == ?|
-          settled << [x+1, y] if @squares[[x+1, y]] == ?|
-        end
-      end
+      return if @active.empty?
 
       yield self
     end
@@ -139,7 +139,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    6.times { simulation.next }
+    5.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -157,29 +157,29 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    5.times { simulation.next }
-    assert_equal <<~SLICE.chomp, @slice.to_s
-      ......+.......
-      ......|.....#.
-      .#..#.|.....#.
-      .#..#.|#......
-      .#..#.|#......
-      .#~~~~~#......
-      .#~~~~~#......
-      .#######......
-      ..............
-      ..............
-      ....#.....#...
-      ....#.....#...
-      ....#.....#...
-      ....#######...
-    SLICE
-
     4.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
       .#..#.|.....#.
+      .#..#.|#......
+      .#..#.|#......
+      .#~~~~~#......
+      .#~~~~~#......
+      .#######......
+      ..............
+      ..............
+      ....#.....#...
+      ....#.....#...
+      ....#.....#...
+      ....#######...
+    SLICE
+
+    2.times { simulation.next }
+    assert_equal <<~SLICE.chomp, @slice.to_s
+      ......+.......
+      ......|.....#.
+      .#..#.|.....#.
       .#..#~~#......
       .#..#~~#......
       .#~~~~~#......
@@ -193,7 +193,7 @@ class TestSlice < Minitest::Test
       ....#######...
     SLICE
 
-    24.times { simulation.next }
+    21.times { simulation.next }
     assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ......|.....#.
@@ -234,6 +234,21 @@ class TestSlice < Minitest::Test
 end
 
 def solve(input)
+  slice = Slice.parse(input)
+  min_y = slice.squares.select {|_,s| s == ?# }.map(&:first).map(&:last).min
+  simulation = slice.simulate
+
+  loop do
+    simulation.next
+  end
+
+  # puts
+  # min_x, max_x = slice.water.map(&:first).minmax
+  # min_y, max_y = slice.water.map(&:last).minmax
+  # min_y = [0, min_y].min
+  # puts (min_y..max_y).map {|y| (min_x-1..max_x+1).map {|x| slice.squares.fetch([x, y]) { ?. } }.join }.join(?\n)
+
+  slice.water.count {|_,y| y >= min_y }
 end
 
 if __FILE__ == $0
