@@ -1,3 +1,5 @@
+require "set"
+
 require "minitest"
 require "minitest/pride"
 
@@ -16,10 +18,30 @@ class Slice
   def initialize(squares)
     @squares = squares
     @squares[[500, 0]] = ?+
+    @active = Set[[500, 0]]
   end
 
   def simulate
+    return enum_for(__method__) unless block_given?
 
+    loop do
+      @active.to_a.each do |x, y|
+        @active.delete([x, y])
+        case @squares.fetch([x, y])
+        when ?+
+          @squares[[x, y+1]] = ?|
+          @active << [x, y+1]
+        when ?|
+          @squares[[x, y+1]] = ?|
+          @active << [x, y+1]
+        end
+      end
+
+      yield self
+    end
+  end
+
+  def water
   end
 
   def to_s
@@ -31,8 +53,8 @@ class Slice
 end
 
 class TestSlice < Minitest::Test
-  def test_parse_to_s
-    slice = Slice.parse(<<~SLICE)
+  def setup
+    @slice = Slice.parse(<<~SLICE)
       x=495, y=2..7
       y=7, x=495..501
       x=501, y=3..7
@@ -42,14 +64,39 @@ class TestSlice < Minitest::Test
       x=504, y=10..13
       y=13, x=498..504
     SLICE
+  end
 
-    assert_equal <<~SLICE.chomp, slice.to_s
+  def test_parse_to_s
+    assert_equal <<~SLICE.chomp, @slice.to_s
       ......+.......
       ............#.
       .#..#.......#.
       .#..#..#......
       .#..#..#......
       .#.....#......
+      .#.....#......
+      .#######......
+      ..............
+      ..............
+      ....#.....#...
+      ....#.....#...
+      ....#.....#...
+      ....#######...
+    SLICE
+  end
+
+  def test_simulate
+    simulation = @slice.simulate
+
+    slice = 5.times { simulation.next }
+
+    assert_equal <<~SLICE.chomp, @slice.to_s
+      ......+.......
+      ......|.....#.
+      .#..#.|.....#.
+      .#..#.|#......
+      .#..#.|#......
+      .#....|#......
       .#.....#......
       .#######......
       ..............
