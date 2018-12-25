@@ -1,35 +1,32 @@
-require "set"
-
 require "minitest"
 require "minitest/pride"
 
 class Slice
   def self.parse(s)
-    clay = Set.new
+    squares = {}
     s.scan(/^(x|y)=(\d+), (?:x|y)=(\d+)..(\d+)$/m).each do |xy, i, min, max|
       i, min, max = [i, min, max].map(&:to_i)
-      clay.merge((min..max).map {|j| xy == ?x ? [j, i] : [i, j] })
+      (min..max).map {|j| xy == ?x ? [i, j] : [j, i] }.each do |pos|
+        squares[pos] = ?#
+      end
     end
-    new(clay)
+    new(squares)
   end
 
-  def initialize(clay)
-    @clay = clay
+  def initialize(squares)
+    @squares = squares
+    @squares[[500, 0]] = ?+
+  end
+
+  def simulate
+
   end
 
   def to_s
-    min_x, max_x = @clay.map(&:last).minmax
-    min_y, max_y = @clay.map(&:first).minmax
+    min_x, max_x = @squares.keys.map(&:first).minmax
+    min_y, max_y = @squares.keys.map(&:last).minmax
     min_y = [0, min_y].min
-    (min_y..max_y).map {|y|
-      (min_x-1..max_x+1).map {|x|
-        if [x, y] == [500, 0]
-          ?+
-        else
-          @clay.include?([y, x]) ? ?# : ?.
-        end
-      }.join
-    }.join(?\n)
+    (min_y..max_y).map {|y| (min_x-1..max_x+1).map {|x| @squares.fetch([x, y]) { ?. } }.join }.join(?\n)
   end
 end
 
