@@ -349,9 +349,7 @@ impl Unit {
             return HashSet::new();
         }
 
-        targets.iter()
-            .flat_map(|x| map.open_neighbors(x))
-            .collect()
+        targets.iter().flat_map(|x| map.open_neighbors(x)).collect()
     }
 
     fn reachable(&self, square: &Square, map: &Map) -> HashMap<Square, usize> {
