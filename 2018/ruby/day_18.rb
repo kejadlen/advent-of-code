@@ -220,7 +220,19 @@ end
 
 def solve(input)
   area = Area.parse(input)
-  area = area.changes.lazy.drop(10).first
+  changes = area.changes
+
+  # Part One
+  # 11.times do |i|
+  1000000001.times do |i|
+    changes.next
+
+    wooded = area.acres.flat_map(&:itself).count(?|)
+    lumberyards = area.acres.flat_map(&:itself).count(?#)
+
+    puts "#{i}: #{wooded * lumberyards}"
+  end
+
   wooded = area.acres.flat_map(&:itself).count(?|)
   lumberyards = area.acres.flat_map(&:itself).count(?#)
   wooded * lumberyards
@@ -231,3 +243,38 @@ if __FILE__ == $0
 
   puts solve(ARGF.read)
 end
+
+__END__
+Here's the cycle, 28 minutes long:
+
+1000000000 % 28 = 552 % 28
+552 % 28 = 20
+
+540: 223468
+541: 227744
+542: 226338
+543: 221697
+544: 214775
+545: 206150
+546: 200326
+547: 197380
+548: 177364
+549: 177834
+550: 176960
+551: 176490
+552: 174584
+553: 177683
+554: 176808
+555: 176715
+556: 177784
+557: 182016
+558: 182479
+559: 188256
+560: 194892
+561: 199864
+562: 206720
+563: 210330
+564: 212102
+565: 212310
+566: 215306
+567: 217260
