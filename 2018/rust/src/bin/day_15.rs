@@ -8,7 +8,7 @@ use advent_of_code::main;
 
 main!();
 
-fn solve(input: &str) -> Result<String, Box<Error>> {
+fn solve(_input: &str) -> Result<String, Box<Error>> {
     unimplemented!();
 }
 
@@ -458,7 +458,7 @@ enum Race {
 }
 
 impl Race {
-    fn enemy(&self) -> Race {
+    fn enemy(self) -> Race {
         match self {
             Race::Elf => Race::Goblin,
             Race::Goblin => Race::Elf,
