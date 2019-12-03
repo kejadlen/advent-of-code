@@ -13,11 +13,12 @@ wire_points = wire_paths.map {|path|
                 when ?D then [x, y-i-1]
                 end
     }
-  }
+  }.map.with_index.to_h
 }
 
-intersections = wire_points[0] & wire_points[1]
+intersections = wire_points[0].select {|k, _| wire_points[1].has_key?(k) }
 intersections.delete([0, 0])
 
-distances = intersections.map {|(x, y)| x.abs + y.abs }
+# distances = intersections.map {|(x, y), _| x.abs + y.abs }
+distances = intersections.map {|p, d| d + wire_points[1].fetch(p) }
 puts distances.min
