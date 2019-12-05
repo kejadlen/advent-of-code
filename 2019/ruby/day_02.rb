@@ -1,47 +1,20 @@
-OPCODES = ARGF.read.split(?,).map(&:to_i)
+require_relative "computer"
 
-# opcodes[1] = 12
-# opcodes[2] = 2
+program = ARGF.read.split(?,).map(&:to_i)
 
-# pc = 0
-# loop do
-#   p opcodes
-#   case opcodes[pc]
-#   when 1
-#     opcodes[opcodes[pc+3]] = opcodes[opcodes[pc+1]] + opcodes[opcodes[pc+2]]
-#     pc += 4
-#   when 2
-#     opcodes[opcodes[pc+3]] = opcodes[opcodes[pc+1]] * opcodes[opcodes[pc+2]]
-#     pc += 4
-#   when 99
-#     puts opcodes[0]
-#     exit
-#   end
-# end
+# modified = program.dup
+# modified[1] = 12
+# modified[2] = 2
+# c = Computer.new(modified)
+# puts c.each.inject(nil) {|_,i| i }.fetch(0)
 
-def run(noun, verb)
-  memory = OPCODES.dup
-  memory[1] = noun
-  memory[2] = verb
-
-  pc = 0
-  loop do
-    case memory[pc]
-    when 1
-      memory[memory[pc+3]] = memory[memory[pc+1]] + memory[memory[pc+2]]
-      pc += 4
-    when 2
-      memory[memory[pc+3]] = memory[memory[pc+1]] * memory[memory[pc+2]]
-      pc += 4
-    when 99
-      return memory[0]
-    end
-  end
-end
-
-(0..99).each do |noun|
-  (0..99).each do |verb|
-    value = run(noun, verb)
-    puts 100 * noun + verb and exit if value == 19690720
-  end
-end
+noun, verb = (0..99).flat_map {|noun| (0..99).map {|verb| [noun, verb] } }
+  .find {|(noun, verb)|
+    modified = program.dup
+    modified[1] = noun
+    modified[2] = verb
+    c = Computer.new(modified)
+    final = c.run
+    final.fetch(0) == 19690720
+  }
+puts 100 * noun + verb
