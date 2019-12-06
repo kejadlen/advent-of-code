@@ -1,5 +1,18 @@
-# typed: false
-OPCODES = {
+# typed: strict
+
+require "sorbet-runtime"
+
+AnyIO = T.type_alias { T.any(IO, StringIO) }
+Memory = T.type_alias { T::Array[T.nilable(Integer)] }
+
+class Mode < T::Enum
+  enums do
+    Position = new
+    Immediate = new
+  end
+end
+
+OPCODES = T.let({
   1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; nil }, # add
   2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; nil }, # multiply
   3  => ->(m, i, _, a)       { m[a] = i.gets.to_i           ; nil }, # input
@@ -9,55 +22,70 @@ OPCODES = {
   7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; nil }, # less than
   8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; nil }, # equals
   99 => ->(*)                { throw :halt                        },
-}
+}, T::Hash[T.untyped, T.untyped])
 
 class Parameter
+  extend T::Sig
+
+  sig {params(value: T.any(Parameter, Integer)).returns(Parameter)}
   def self.from(value)
     case value
     when Parameter
       value
     when Integer
-      new(0, value)
+      new(Mode::Position, value)
     else
-      raise "unexpected value: #{value}"
+      T.absurd(value)
     end
   end
 
+  sig {returns(Mode)}
+  attr_reader :mode
+
+  sig {returns(Integer)}
   attr_reader :value
 
+  sig {params(mode: Mode, value: Integer).void}
   def initialize(mode, value)
-    raise "unexpected mode: #{mode.inspect}" unless [0, 1].include?(mode)
-
-    @mode, @value = mode, value
-  end
-
-  def position_mode?
-    @mode.zero?
-  end
-
-  def immediate_mode?
-    @mode.nonzero?
+    @mode = T.let(mode, Mode)
+    @value = T.let(value, Integer)
   end
 end
 
 class Computer
+  extend T::Sig
+
+  sig {params(input: String).returns(Computer)}
   def self.from(input)
     new(input.split(?,).map(&:to_i))
   end
 
+  sig {returns(AnyIO)}
   attr_reader :input, :output
 
+  sig {params(program: Memory, input: AnyIO, output: AnyIO).void}
   def initialize(program, input=STDIN, output=STDOUT)
-    @memory, @input, @output = program.dup, input, output
-    @pc = 0
+    @memory = T.let(program.dup, Memory)
+    @input = T.let(input, AnyIO)
+    @output = T.let(output, AnyIO)
+    @pc = T.let(0, Integer)
   end
 
+  sig {params(input: AnyIO, output: AnyIO).returns(Memory)}
   def run(input=STDIN, output=STDOUT)
-    each(input, output).inject(nil) {|_,i| i }
+    each = T.cast(each(input, output), T::Enumerator[Memory])
+    each.inject(nil) {|_,i| i }
   end
 
-  def each(input, output)
-    return enum_for(__method__, input, output) unless block_given?
+  sig {
+    params(
+      input: AnyIO,
+      output: AnyIO,
+      blk: T.nilable(T.proc.params(m: Memory).returns(T.nilable(Integer)))
+    ).returns(T.any(T::Enumerator[Memory], BasicObject))
+  }
+  def each(input, output, &blk)
+    return enum_for(T.must(__method__), input, output) unless block_given?
 
     catch(:halt) do
       loop do
@@ -66,8 +94,12 @@ class Computer
         @pc += 1
 
         n = opcode.arity - 3
-        args = (0...n).zip(instruction[0..2].reverse.chars.map(&:to_i)).map {|i, mode|
-          value = @memory[@pc + i]
+        args = (0...n).zip(T.must(instruction[0..2]).reverse.chars.map(&:to_i)).map {|i, mode|
+          value = @memory.fetch(@pc + i) || 0
+          mode = case mode
+                 when 0 then Mode::Position
+                 when 1 then Mode::Immediate
+                 end
           Parameter.new(mode, value)
         }
         @pc += n
@@ -79,111 +111,22 @@ class Computer
     end
   end
 
+  sig {params(parameter: Parameter).returns(Integer)}
   def [](parameter)
     parameter = Parameter.from(parameter)
-    parameter.position_mode? ? @memory.fetch(parameter.value) : parameter.value
+    mode = parameter.mode
+    case mode
+    when Mode::Position  then @memory.fetch(parameter.value) || 0
+    when Mode::Immediate then parameter.value
+    else T.absurd(mode)
+    end
   end
   alias_method :fetch, :[]
 
+  sig {params(parameter: Parameter, value: Integer).void}
   def []=(parameter, value)
-    raise "writes should never be in immediate mode" if parameter.immediate_mode?
+    raise "writes should never be in immediate mode" if parameter.mode == Mode::Immediate
 
     @memory[parameter.value] = value
   end
-end
-
-require "minitest"
-
-class TestComputer < Minitest::Test
-  def test_samples
-    c = Computer.from("1,9,10,3,2,3,11,0,99,30,40,50").each(StringIO.new, StringIO.new)
-
-    assert_equal 70, c.next[3]
-    assert_equal 3500, c.next[0]
-  end
-
-  def test_more_samples
-    assert_equal 2, run_program("1,0,0,0,99")[0]
-    assert_equal 6, run_program("2,3,0,3,99")[3]
-    assert_equal 9801, run_program("2,4,4,5,99,0")[5]
-    assert_equal 30, run_program("1,1,1,4,99,5,6,0,99")[0]
-  end
-
-  def test_parameter_modes
-    assert_equal 99, run_program("1002,4,3,4,33")[4]
-    assert_equal 99, run_program("1101,100,-1,4,0")[4]
-  end
-
-  def test_input_output
-    assert_equal 1, run_program("3,50,99", input: "1\n")[50]
-
-    output = StringIO.new
-    run_program("4,3,99,50", output: output)
-    assert_equal "50\n", output.string
-  end
-
-  def test_comparisons
-    # Using position mode, consider whether the input is equal to 8; output 1
-    # (if it is) or 0 (if it is not).
-    { 7 => 0, 8 => 1, 9 => 0 }.each do |i, o|
-      c = Computer.from("3,9,8,9,10,9,4,9,99,-1,8")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-    end
-
-    # Using position mode, consider whether the input is less than 8; output 1
-    # (if it is) or 0 (if it is not).
-    { 7 => 1, 8 => 0, 9 => 0 }.each do |i, o|
-      c = Computer.from("3,9,7,9,10,9,4,9,99,-1,8")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-    end
-
-    # Using immediate mode, consider whether the input is equal to 8; output 1
-    # (if it is) or 0 (if it is not).
-    { 7 => 0, 8 => 1, 9 => 0 }.each do |i, o|
-      c = Computer.from("3,3,1108,-1,8,3,4,3,99")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-    end
-
-    # Using immediate mode, consider whether the input is less than 8; output 1
-    # (if it is) or 0 (if it is not).
-    { 7 => 1, 8 => 0, 9 => 0 }.each do |i, o|
-      c = Computer.from("3,3,1107,-1,8,3,4,3,99")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-    end
-  end
-
-  def test_jumps
-    { -1 => 1, 0 => 0, 1 => 1 }.each do |i, o|
-      c = Computer.from("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-
-      c = Computer.from("3,3,1105,-1,9,1101,0,0,12,4,12,99,1")
-      output = StringIO.new
-      c.run(StringIO.new(i.to_s), output)
-      assert_equal "#{o}\n", output.string
-    end
-  end
-
-  private
-
-  def run_program(p, input: "", output: StringIO.new)
-    Computer.from(p).run(
-      StringIO.new(input),
-      output,
-    )
-  end
-end
-
-if __FILE__ == $0
-  require "minitest/autorun"
 end
