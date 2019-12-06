@@ -1,3 +1,4 @@
+# typed: false
 # puts ARGF.read.lines.map(&:to_i).map {|mass|
 #   (mass / 3.0).floor - 2
 # }.sum

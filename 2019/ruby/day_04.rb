@@ -1,3 +1,4 @@
+# typed: strict
 puts (236491..713787).map(&:to_s).count {|password|
   matching_digits = password.scan(/(.)\1/)
 

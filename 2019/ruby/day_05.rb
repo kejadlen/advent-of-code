@@ -1,3 +1,4 @@
+# typed: false
 require_relative "computer"
 
 program = ARGF.read.split(?,).map(&:to_i)

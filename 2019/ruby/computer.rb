@@ -1,3 +1,4 @@
+# typed: false
 OPCODES = {
   1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; nil }, # add
   2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; nil }, # multiply

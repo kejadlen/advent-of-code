@@ -1,3 +1,4 @@
+# typed: false
 wire_paths = ARGF.read.lines.map {|l|
   l.split(?,).map {|i| [i[0], i[1..-1].to_i] }
 }
