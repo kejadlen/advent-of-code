@@ -21,7 +21,7 @@ OPCODES = T.let({
   6  => ->(m, _, _, a, b)    { m[a].zero? ? m[b]            : nil }, # jump-if-false
   7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; nil }, # less than
   8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; nil }, # equals
-  99 => ->(*)                { throw :halt                        },
+  99 => ->(*)                { throw :halt                        }, # halt
 }, T::Hash[T.untyped, T.untyped])
 
 class Parameter
@@ -73,8 +73,7 @@ class Computer
 
   sig {params(input: AnyIO, output: AnyIO).returns(Memory)}
   def run(input=STDIN, output=STDOUT)
-    each = T.cast(each(input, output), T::Enumerator[Memory])
-    each.inject(nil) {|_,i| i }
+    each(input, output).inject(nil) {|_,i| i }
   end
 
   sig {
@@ -82,7 +81,7 @@ class Computer
       input: AnyIO,
       output: AnyIO,
       blk: T.nilable(T.proc.params(m: Memory).returns(T.nilable(Integer)))
-    ).returns(T.any(T::Enumerator[Memory], BasicObject))
+    ).returns(T::Enumerator[Memory])
   }
   def each(input, output, &blk)
     return enum_for(T.must(__method__), input, output) unless block_given?
@@ -99,6 +98,7 @@ class Computer
           mode = case mode
                  when 0 then Mode::Position
                  when 1 then Mode::Immediate
+                 else fail "unexpected mode: #{mode}"
                  end
           Parameter.new(mode, value)
         }
@@ -109,6 +109,10 @@ class Computer
         yield @memory
       end
     end
+
+    # Satisfy sorbet:
+    #   https://sorbet-ruby.slack.com/archives/CHN2L03NH/p1575648549254600
+    Enumerator.new {}
   end
 
   sig {params(parameter: Parameter).returns(Integer)}

@@ -1,3 +1,4 @@
+# typed: false
 orbits = ARGF
   .read.split("\n").map {|l| l.split(?)) }
   .each.with_object(Hash.new {|h,k| h[k] = []}) {|(a, b), o|
