@@ -1,5 +1,7 @@
 # typed: strict
 
+require "stringio"
+
 require "sorbet-runtime"
 
 AnyIO = T.type_alias { T.any(IO, StringIO) }
