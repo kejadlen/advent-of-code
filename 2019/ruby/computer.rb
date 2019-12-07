@@ -18,12 +18,12 @@ OPCODES = T.let({
   1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; nil }, # add
   2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; nil }, # multiply
   3  => ->(m, i, _, a)       { m[a] = i.gets.to_i           ; nil }, # input
-  4  => ->(m, _, o, a)       { o.puts(m[a])                 ; nil }, # output
-  5  => ->(m, _, _, a, b)    { m[a].nonzero? ? m[b]         : nil }, # jump-if-true
-  6  => ->(m, _, _, a, b)    { m[a].zero? ? m[b]            : nil }, # jump-if-false
+  4  => ->(m, _, o, a)       {        o.puts(m[a])          ; nil }, # output
+  5  => ->(m, _, _, a, b)    {        m[a].nonzero? ? m[b]  : nil }, # jump-if-true
+  6  => ->(m, _, _, a, b)    {        m[a].zero?    ? m[b]  : nil }, # jump-if-false
   7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; nil }, # less than
   8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; nil }, # equals
-  99 => ->(*)                { throw :halt                        }, # halt
+  99 => ->(*)                {        throw :halt                 }, # halt
 }, T::Hash[T.untyped, T.untyped])
 
 class Parameter
