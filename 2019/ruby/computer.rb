@@ -95,11 +95,12 @@ class Computer
         @pc += 1
 
         n = opcode.arity - 3
-        args = (0...n).zip(T.must(instruction[0..2]).reverse.chars.map(&:to_i)).map {|i, mode|
+        args = (0...n).map {|i|
+          mode = instruction[2-i] { ?0 }
           value = @memory.fetch(@pc + i) || 0
           mode = case mode
-                 when 0 then Mode::Position
-                 when 1 then Mode::Immediate
+                 when ?0 then Mode::Position
+                 when ?1 then Mode::Immediate
                  else fail "unexpected mode: #{mode}"
                  end
           Parameter.new(mode, value)
