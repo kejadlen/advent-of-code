@@ -94,7 +94,7 @@ class Computer
         opcode = OPCODES.fetch(instruction[-2..-1].to_i)
         @pc += 1
 
-        n = opcode.arity - 3
+        n = opcode.arity - 3 # subtract the memory, input, and output params
         args = (0...n).map {|i|
           mode = instruction[2-i] { ?0 }
           value = @memory.fetch(@pc + i) || 0
