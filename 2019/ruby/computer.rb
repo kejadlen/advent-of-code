@@ -13,6 +13,18 @@ class Mode < T::Enum
     Immediate = new
     Relative = new
   end
+
+  extend T::Sig
+
+  sig {params(value: String).returns(Mode)}
+  def self.from(value)
+    case value
+    when ?0 then Mode::Position
+    when ?1 then Mode::Immediate
+    when ?2 then Mode::Relative
+    else fail "unexpected mode: #{value}"
+    end
+  end
 end
 
 OPCODES = T.let({
@@ -34,12 +46,9 @@ class Parameter
   sig {params(value: T.any(Parameter, Integer)).returns(Parameter)}
   def self.from(value)
     case value
-    when Parameter
-      value
-    when Integer
-      new(Mode::Position, value)
-    else
-      T.absurd(value)
+    when Parameter then value
+    when Integer then new(Mode::Position, value)
+    else T.absurd(value)
     end
   end
 
@@ -97,14 +106,8 @@ class Computer
 
         n = opcode.arity - 3 # subtract the computer, input, and output params
         args = (0...n).map {|i|
-          mode = instruction[2-i] { ?0 }
-          value = @memory.fetch(pc + i) || 0
-          mode = case mode
-                 when ?0 then Mode::Position
-                 when ?1 then Mode::Immediate
-                 when ?2 then Mode::Relative
-                 else fail "unexpected mode: #{mode}"
-                 end
+          mode = Mode.from(T.must(instruction[2-i]))
+          value = @memory[pc + i] || 0
           Parameter.new(mode, value)
         }
         self.pc += n
@@ -127,7 +130,7 @@ class Computer
     case mode
     when Mode::Position  then @memory[parameter.value] || 0
     when Mode::Immediate then parameter.value
-    when Mode::Relative then @memory[rb + parameter.value] || 0
+    when Mode::Relative  then @memory[rb + parameter.value] || 0
     else T.absurd(mode)
     end
   end
