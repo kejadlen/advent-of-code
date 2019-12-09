@@ -16,16 +16,16 @@ class Mode < T::Enum
 end
 
 OPCODES = T.let({
-  1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; [nil, nil]  }, # add
-  2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; [nil, nil]  }, # multiply
-  3  => ->(m, i, _, a)       { m[a] = i.gets.to_i           ; [nil, nil]  }, # input
-  4  => ->(m, _, o, a)       {        o.puts(m[a])          ; [nil, nil]  }, # output
-  5  => ->(m, _, _, a, b)    {        [m[a].nonzero? ? m[b] :  nil, nil]  }, # jump-if-true
-  6  => ->(m, _, _, a, b)    {        [m[a].zero?    ? m[b] :  nil, nil]  }, # jump-if-false
-  7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; [nil, nil]  }, # less than
-  8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; [nil, nil]  }, # equals
-  9  => ->(m, _, _, a)       {                                [nil, m[a]] }, # adjust relative base
-  99 => ->(*)                {        throw :halt                         }, # halt
+  1  => ->(x, _, _, a, b, c) { x[c]  = x[a] + x[b]            }, # add
+  2  => ->(x, _, _, a, b, c) { x[c]  = x[a] * x[b]            }, # multiply
+  3  => ->(x, i, _, a)       { x[a]  = i.gets.to_i            }, # input
+  4  => ->(x, _, o, a)       {         o.puts(x[a])           }, # output
+  5  => ->(x, _, _, a, b)    { x.pc  = x[b] if x[a].nonzero?  }, # jump-if-true
+  6  => ->(x, _, _, a, b)    { x.pc  = x[b] if x[a].zero?     }, # jump-if-false
+  7  => ->(x, _, _, a, b, c) { x[c]  = (x[a] < x[b])  ? 1 : 0 }, # less than
+  8  => ->(x, _, _, a, b, c) { x[c]  = (x[a] == x[b]) ? 1 : 0 }, # equals
+  9  => ->(x, _, _, a)       { x.rb += x[a]                   }, # adjust relative base
+  99 => ->(*)                {         throw :halt            }, # halt
 }, T::Hash[Integer, T.untyped])
 
 class Parameter
@@ -64,16 +64,14 @@ class Computer
     new(input.split(?,).map(&:to_i))
   end
 
-  sig {returns(AnyIO)}
-  attr_reader :input, :output
+  sig {returns(Integer)}
+  attr_accessor :pc, :rb
 
-  sig {params(program: Memory, input: AnyIO, output: AnyIO).void}
-  def initialize(program, input=STDIN, output=STDOUT)
+  sig {params(program: Memory).void}
+  def initialize(program)
     @memory = T.let(program.dup, Memory)
-    @input = T.let(input, AnyIO)
-    @output = T.let(output, AnyIO)
     @pc = T.let(0, Integer)
-    @relative_base = T.let(0, Integer)
+    @rb = T.let(0, Integer)
   end
 
   sig {params(input: AnyIO, output: AnyIO).returns(Memory)}
@@ -93,14 +91,14 @@ class Computer
 
     catch(:halt) do
       loop do
-        instruction = @memory[@pc].to_s.rjust(5, ?0)
+        instruction = @memory[pc].to_s.rjust(5, ?0)
         opcode = OPCODES.fetch(instruction[-2..-1].to_i)
-        @pc += 1
+        self.pc += 1
 
-        n = opcode.arity - 3 # subtract the memory, input, and output params
+        n = opcode.arity - 3 # subtract the computer, input, and output params
         args = (0...n).map {|i|
           mode = instruction[2-i] { ?0 }
-          value = @memory.fetch(@pc + i) || 0
+          value = @memory.fetch(pc + i) || 0
           mode = case mode
                  when ?0 then Mode::Position
                  when ?1 then Mode::Immediate
@@ -109,11 +107,9 @@ class Computer
                  end
           Parameter.new(mode, value)
         }
-        @pc += n
+        self.pc += n
 
-        pc, rb = opcode.call(self, input, output, *args)
-        @pc = pc if pc
-        @relative_base += rb if rb
+        opcode.call(self, input, output, *args)
 
         yield @memory
       end
@@ -131,7 +127,7 @@ class Computer
     case mode
     when Mode::Position  then @memory[parameter.value] || 0
     when Mode::Immediate then parameter.value
-    when Mode::Relative then @memory[@relative_base + parameter.value] || 0
+    when Mode::Relative then @memory[rb + parameter.value] || 0
     else T.absurd(mode)
     end
   end
@@ -144,7 +140,7 @@ class Computer
     case mode
     when Mode::Position  then @memory[parameter.value] = value
     when Mode::Immediate then raise "writes should never be in immediate mode"
-    when Mode::Relative then @memory[@relative_base + parameter.value] = value
+    when Mode::Relative then @memory[rb + parameter.value] = value
     else T.absurd(mode)
     end
   end

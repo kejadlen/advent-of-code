@@ -25,7 +25,7 @@ class TestComputer < Minitest::Test
   end
 
   def test_input_output
-    assert_equal 1, run_program("3,50,99", input: "1\n")[50]
+    assert_equal 1, run_program("3,50,99", input: "1")[50]
 
     output = StringIO.new
     run_program("4,3,99,50", output: output)
@@ -82,6 +82,21 @@ class TestComputer < Minitest::Test
       c.run(StringIO.new(i.to_s), output)
       assert_equal "#{o}\n", output.string
     end
+  end
+
+  def test_relative_base
+    program = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
+    output = StringIO.new
+    run_program(program, output: output)
+    assert_equal program.split(?,).join("\n"), output.string.strip
+
+    output = StringIO.new
+    run_program("1102,34915192,34915192,7,4,7,99,0", output: output)
+    assert_equal 16, output.string.strip.size
+
+    output = StringIO.new
+    run_program("104,1125899906842624,99", output: output)
+    assert_equal 1125899906842624, output.string.to_i
   end
 
   private
