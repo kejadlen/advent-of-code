@@ -11,20 +11,22 @@ class Mode < T::Enum
   enums do
     Position = new
     Immediate = new
+    Relative = new
   end
 end
 
 OPCODES = T.let({
-  1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; nil }, # add
-  2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; nil }, # multiply
-  3  => ->(m, i, _, a)       { m[a] = i.gets.to_i           ; nil }, # input
-  4  => ->(m, _, o, a)       {        o.puts(m[a])          ; nil }, # output
-  5  => ->(m, _, _, a, b)    {        m[a].nonzero? ? m[b]  : nil }, # jump-if-true
-  6  => ->(m, _, _, a, b)    {        m[a].zero?    ? m[b]  : nil }, # jump-if-false
-  7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; nil }, # less than
-  8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; nil }, # equals
-  99 => ->(*)                {        throw :halt                 }, # halt
-}, T::Hash[T.untyped, T.untyped])
+  1  => ->(m, _, _, a, b, c) { m[c] = m[a] + m[b]           ; [nil, nil]  }, # add
+  2  => ->(m, _, _, a, b, c) { m[c] = m[a] * m[b]           ; [nil, nil]  }, # multiply
+  3  => ->(m, i, _, a)       { m[a] = i.gets.to_i           ; [nil, nil]  }, # input
+  4  => ->(m, _, o, a)       {        o.puts(m[a])          ; [nil, nil]  }, # output
+  5  => ->(m, _, _, a, b)    {        [m[a].nonzero? ? m[b] :  nil, nil]  }, # jump-if-true
+  6  => ->(m, _, _, a, b)    {        [m[a].zero?    ? m[b] :  nil, nil]  }, # jump-if-false
+  7  => ->(m, _, _, a, b, c) { m[c] = (m[a] < m[b])  ? 1 : 0; [nil, nil]  }, # less than
+  8  => ->(m, _, _, a, b, c) { m[c] = (m[a] == m[b]) ? 1 : 0; [nil, nil]  }, # equals
+  9  => ->(m, _, _, a)       {                                [nil, m[a]] }, # adjust relative base
+  99 => ->(*)                {        throw :halt                         }, # halt
+}, T::Hash[Integer, T.untyped])
 
 class Parameter
   extend T::Sig
@@ -71,6 +73,7 @@ class Computer
     @input = T.let(input, AnyIO)
     @output = T.let(output, AnyIO)
     @pc = T.let(0, Integer)
+    @relative_base = T.let(0, Integer)
   end
 
   sig {params(input: AnyIO, output: AnyIO).returns(Memory)}
@@ -101,13 +104,16 @@ class Computer
           mode = case mode
                  when ?0 then Mode::Position
                  when ?1 then Mode::Immediate
+                 when ?2 then Mode::Relative
                  else fail "unexpected mode: #{mode}"
                  end
           Parameter.new(mode, value)
         }
         @pc += n
 
-        @pc = opcode.call(self, input, output, *args) || @pc
+        pc, rb = opcode.call(self, input, output, *args)
+        @pc = pc if pc
+        @relative_base += rb if rb
 
         yield @memory
       end
@@ -123,8 +129,9 @@ class Computer
     parameter = Parameter.from(parameter)
     mode = parameter.mode
     case mode
-    when Mode::Position  then @memory.fetch(parameter.value) || 0
+    when Mode::Position  then @memory[parameter.value] || 0
     when Mode::Immediate then parameter.value
+    when Mode::Relative then @memory[@relative_base + parameter.value] || 0
     else T.absurd(mode)
     end
   end
@@ -132,8 +139,13 @@ class Computer
 
   sig {params(parameter: Parameter, value: Integer).void}
   def []=(parameter, value)
-    raise "writes should never be in immediate mode" if parameter.mode == Mode::Immediate
 
-    @memory[parameter.value] = value
+    mode = parameter.mode
+    case mode
+    when Mode::Position  then @memory[parameter.value] = value
+    when Mode::Immediate then raise "writes should never be in immediate mode"
+    when Mode::Relative then @memory[@relative_base + parameter.value] = value
+    else T.absurd(mode)
+    end
   end
 end
