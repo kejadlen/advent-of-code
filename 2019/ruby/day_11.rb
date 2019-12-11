@@ -35,7 +35,7 @@ t = Thread.new {
             when :down  then [ 0, -1]
             when :left  then [-1,  0]
             end
-    robot.panel = robot.panel.zip(delta).map {|a,b| a + b }
+    robot.panel = robot.panel.zip(delta).map(&:sum)
   end
 }
 
