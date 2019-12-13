@@ -1,4 +1,5 @@
 require "matrix"
+require "prime"
 require "set"
 
 V = Vector
@@ -38,6 +39,10 @@ class Moons < SimpleDelegator
 
   def energy
     map {|m| m.potential_energy * m.kinetic_energy }.sum
+  end
+
+  def fingerprint(axis)
+    map {|m| [m.pos[axis], m.vel[axis]] }
   end
 end
 
@@ -81,13 +86,39 @@ class TestMoons < Minitest::Test
   end
 end
 
+def gcd(*n)
+  n.map {|c| Prime.prime_division(c).to_h }
+    .inject {|h,p| h.merge(p) {|_, a, b| [a, b].max }}
+    .map {|n,e| n**e }
+    .inject(&:*)
+end
+
 if ARGF.to_io.tty?
   require "minitest/autorun"
 else
   moons = Moons.from(ARGF.read)
 
-  1000.times do
+  # 1000.times do
+  #   moons = moons.step
+  # end
+  # puts moons.energy
+
+  seen = [{}, {}, {}]
+  cycles = [nil, nil, nil]
+  (0..).each do |step|
+    if cycles.none?(&:nil?)
+      puts gcd(*cycles.map(&:size))
+      exit
+    end
+
+    (0..2).each do |i|
+      seen[i][moons.fingerprint(i)] ||= step
+    end
+
     moons = moons.step
+
+    (0..2).each do |i|
+      cycles[i] ||= (seen[i][moons.fingerprint(i)]..step) if seen[i].include?(moons.fingerprint(i))
+    end
   end
-  puts moons.energy
 end
