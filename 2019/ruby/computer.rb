@@ -83,14 +83,14 @@ class Computer
     @rb = T.let(0, Integer)
   end
 
-  sig {params(input: AnyIO, output: AnyIO).returns(Memory)}
+  sig {params(input: T.untyped, output: AnyIO).returns(Memory)}
   def run(input=STDIN, output=STDOUT)
     each(input, output).inject(nil) {|_,i| i }
   end
 
   sig {
     params(
-      input: AnyIO,
+      input: T.untyped,
       output: AnyIO,
       blk: T.nilable(T.proc.params(m: Memory).returns(T.nilable(Integer)))
     ).returns(T::Enumerator[Memory])

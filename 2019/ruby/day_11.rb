@@ -1,3 +1,5 @@
+# typed: ignore
+
 require "stringio"
 
 require_relative "computer"

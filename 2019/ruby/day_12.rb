@@ -1,3 +1,5 @@
+# typed: ignore
+
 require "matrix"
 require "prime"
 require "set"
