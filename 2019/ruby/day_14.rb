@@ -1,41 +1,37 @@
-reactions = ARGF.read.lines.map {|line|
-  input, output = line.split(" => ")
-  inputs = input.split(", ").map(&:split).each.with_object({}) {|(q,c),h| h[c] = q.to_i }
-  q, c = output.split
-  [c, { quantity: q.to_i, inputs: inputs }]
+reactions = ARGF.read.strip.lines.each.with_object({}) {|line, h|
+  reactands = line.scan(/(\d+) (\w+)/).map {|q,c| [c,q.to_i] }
+  c, q = reactands.pop
+  h[c] = { quantity: q, inputs: reactands }
 }.to_h
 
-class Factory
-  attr_reader :ore_consumed
+Factory = Struct.new(:reactions, :supply, :ores_used) do
+  def produce(chemical)
+    self.ores_used ||= 0
 
-  def initialize(reactions)
-    @reactions = reactions
-    @supply = Hash.new(0)
-    @supply["ORE"] = Float::INFINITY
-    @ore_consumed = 0
-  end
-
-  def produce(want)
-    case @reactions.fetch(want)
+    case reaction = reactions[chemical]
     in { quantity: quantity, inputs: inputs }
-      until inputs.all? {|c,q| @supply[c] >= q }
+    until inputs.all? {|c,q| supply[c] >= q }
         inputs
-          .select {|c,q| @supply[c] < q }
-          .each do |c,q|
+          .select {|c,q| supply[c] < q }
+          .each do |c,_|
             produce(c)
           end
       end
 
       inputs.each do |c,q|
-        @supply[c] -= q
+        self.ores_used += q if c == "ORE"
+        supply[c] -= q
       end
 
-      @ore_consumed += inputs.fetch("ORE") { 0 }
-      @supply[want] += quantity
+      supply[chemical] += quantity
+    else
+      fail "unexpected reaction: #{reaction}"
     end
   end
 end
 
-factory = Factory.new(reactions)
+supply = Hash.new(0)
+supply["ORE"] = Float::INFINITY
+
+factory = Factory.new(reactions, supply)
 factory.produce("FUEL")
-puts factory.ore_consumed
