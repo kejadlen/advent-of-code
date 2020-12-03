@@ -9,7 +9,7 @@ slopes = [
   [1, 2],
 ]
 puts slopes.map {|dx,dy|
-  map.each_slice(dy).map(&:first)
-    .map.with_index {|row,i| row[dx*i % cols] }
+  Array.new(rows / dy) {|i| [dx*i % cols, dy*i] }
+    .map {|x,y| map[y][x] }
     .count(?#)
 }.reduce(&:*)
