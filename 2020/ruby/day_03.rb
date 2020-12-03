@@ -1,4 +1,6 @@
 map = ARGF.read.split("\n").map(&:chars)
+rows = map.size
+cols = map[0].size
 slopes = [
   [1, 1],
   [3, 1],
@@ -7,12 +9,7 @@ slopes = [
   [1, 2],
 ]
 puts slopes.map {|dx,dy|
-  x, y = 0, 0
-  trees = 0
-  until y >= map.length
-    trees += 1 if map[y][x % map[0].size] == ?#
-    x += dx
-    y += dy
-  end
-  trees
+  map.each_slice(dy).map(&:first)
+    .map.with_index {|row,i| row[dx*i % cols] }
+    .count(?#)
 }.reduce(&:*)
