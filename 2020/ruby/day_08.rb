@@ -1,55 +1,55 @@
 require "set"
 
-class Program
-  attr_reader :accumulator
+execute = ->(r, op, arg) {
+  delta = case op
+          when :acc
+            { acc: arg, pc: 1 }
+          when :jmp
+            { pc: arg }
+          when :nop
+            { pc: 1 }
+          else
+            fail
+          end
 
-  def initialize(instructions)
-    @instructions = instructions
-    @accumulator = 0
-    @pc = 0
-  end
+  r.merge(delta) {|_, old, new| old + new }
+}
 
-  def run
-    seen = Set.new
+# part 1
+seen = Set.new
+detect_loop = ->(r, op, arg) {
+  throw :halt if seen.include?(r[:pc])
+  seen << r[:pc]
 
-    loop do
-      break if @pc == @instructions.size
-
-      fail if seen.include?(@pc)
-      seen << @pc
-
-      op, arg = @instructions.fetch(@pc)
-      case op
-      when :acc
-        @accumulator += arg
-        @pc += 1
-      when :jmp
-        @pc += arg
-      when :nop
-        @pc += 1
-      else
-        fail
-      end
-    end
-  end
-end
+  execute[r, op, arg]
+}
 
 instructions = ARGF.read.scan(/(\w+) ([-+]\d+)/).map {|op,arg| [op.to_sym, arg.to_i] }
-uncorrupt = { nop: :jmp, jmp: :nop }
-(0...instructions.size).select {|i|
-  op, _ = instructions.fetch(i)
-  uncorrupt.has_key?(op)
-}.map {|i|
-  attempt = instructions.clone
-  instruction = attempt.fetch(i)
-  attempt[i] = [uncorrupt.fetch(instruction[0]), instruction[1]]
-  attempt
-}.each do |i|
-  program = Program.new(i)
-  begin
-    program.run
-  rescue
-    next
+registers = Hash.new(0)
+
+swaps = { nop: :jmp, jmp: :nop }
+candidates = instructions.filter_map.with_index {|(op, arg), i|
+  swap = swaps[op]
+  if swap.nil?
+    nil
+  else
+    [i, [swap, arg]]
   end
-  puts "accumulator: #{program.accumulator}"
+}.map {|i, swap|
+  candidate = instructions.clone
+  candidate[i] = swap
+  candidate
+}
+
+candidates.each do |candidate|
+  seen = Set.new
+  registers = Hash.new(0)
+  catch(:halt) do
+    while instruction = candidate[registers[:pc]]
+      registers = detect_loop[registers, *instruction]
+    end
+  end
+  break if registers[:pc] == candidate.size
 end
+
+p registers[:acc]
