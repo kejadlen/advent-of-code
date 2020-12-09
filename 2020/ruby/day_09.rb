@@ -2,19 +2,17 @@ N = 25
 
 data = ARGF.read.scan(/\d+/).map(&:to_i)
 
-i = (N..).find {|i|
-  !data[i-N,N].combination(2).map(&:sum).include?(data[i])
-}
-invalid = data[i]
+invalid = data.each_cons(N+1).filter_map {|range|
+  n = range.pop
+  range.combination(2).map(&:sum).include?(n) ? nil : n
+}.first
 
-(0..).each do |start|
-  (2..data.size-start-1).each do |len|
-    sum = data[start, len].sum
-    if sum == invalid
-      p data[start, len].minmax.sum
-      exit
-    elsif sum > invalid
-      next
-    end
-  end
-end
+weakness = (0..).lazy.flat_map {|start|
+  (2..data.size-start-1).map {|len|
+    data[start, len]
+  }
+}.filter_map {|range|
+  range.sum == invalid && range.minmax.sum
+}.first
+
+p weakness
