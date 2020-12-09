@@ -11,8 +11,8 @@ weakness = (0..).lazy.flat_map {|start|
   (2..data.size-start-1).map {|len|
     data[start, len]
   }
-}.filter_map {|range|
-  range.sum == invalid && range.minmax.sum
-}.first
+}.find {|range|
+  range.sum == invalid
+}.minmax.sum
 
 p weakness
