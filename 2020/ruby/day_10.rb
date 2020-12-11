@@ -26,4 +26,4 @@ p dist
   .slice_when {|a,b| a != b }
   .select {|run| run.first == 1 }
   .map {|run| arrangements[run.size] }
-  .inject {|a,b| a*b }
+  .inject(&:*)
