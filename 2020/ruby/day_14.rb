@@ -16,16 +16,18 @@ until ss.eos?
     # value |= mask.gsub(?X, ?0).to_i(2)
     # mem[addr] = value
 
-    addr |= mask.gsub(?X, ?0).to_i(2)
-    floating = mask.reverse.chars.filter_map.with_index {|x,i|
-      x == ?X ? i : nil
-    }
-    (0...2**floating.size).each do |i|
-      floated = addr.to_s(2).rjust(36, ?0).reverse
-      floating.each.with_index do |j,k|
-        floated[j] = i[k].to_s
+    masked = ("%036b" % addr).chars.zip(mask.chars).map {|a,m|
+      case m
+      when ?X then ?X
+      when ?1 then ?1
+      when ?0 then a
+      else fail
       end
-      mem[floated.reverse.to_i(2)] = value
+    }.join
+    floating = masked.count(?X)
+    (0...2**floating).map {|i| i.to_s(2).chars }.each do |i|
+      floated = masked.gsub(?X) { i.pop || "0" }.to_i(2)
+      mem[floated] = value
     end
   else
     fail
