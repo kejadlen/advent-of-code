@@ -10,6 +10,7 @@ foods = ARGF.read
   }
 
 all_ingredients = foods.map(&:ingredients).inject(&:|)
+all_allergens = foods.map(&:allergens).inject(&:|)
 
 no_allergens = all_ingredients.select {|ingredient|
   possible_allergens = foods
@@ -22,5 +23,17 @@ no_allergens = all_ingredients.select {|ingredient|
   }
 }
 
-p foods.map {|f| f.ingredients.count {|i| no_allergens.include?(i) }}.sum
+# part one
+# p foods.map {|f| f.ingredients.count {|i| no_allergens.include?(i) }}.sum
 
+known, unknown = all_allergens.map {|a|
+  [a, foods.select {|f| f.allergens.include?(a) }.map(&:ingredients).inject(&:&) ]
+}.to_h.partition {|_,v| v.size == 1 }.map(&:to_h)
+
+until unknown.empty?
+  unknown.transform_values! {|v| v - known.values.inject(&:|) }
+  new_known, unknown = unknown.partition {|_,v| v.size == 1 }.map(&:to_h)
+  known.merge!(new_known)
+end
+
+p known.transform_values {|v| v.to_a.first }.sort_by(&:first).map(&:last).join(?,)
