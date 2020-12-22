@@ -35,21 +35,21 @@ def evaluate(input)
   ss = StringScanner.new(input)
   until ss.eos?
     ss.scan(/\s*/)
-    case
-    when n = ss.scan(/\d+/)
-      stack << stack.pop[n.to_i]
-    when ss.scan(/\+/)
-      stack << ->(x) { stack.pop + x }
-    when ss.scan(/\*/)
-      stack << ->(x) { stack.pop * x }
-    when ss.scan(/\(/)
-      stack << ->(x) { x }
-    when ss.scan(/\)/)
-      n = stack.pop
-      stack << stack.pop[n]
-    else
-      fail
-    end
+    stack << case
+             when n = ss.scan(/\d+/)
+               stack.pop[n.to_i]
+             when ss.scan(/\+/)
+               ->(x) { stack.pop + x }
+             when ss.scan(/\*/)
+               ->(x) { stack.pop * x }
+             when ss.scan(/\(/)
+               ->(x) { x }
+             when ss.scan(/\)/)
+               n = stack.pop
+               stack.pop[n]
+             else
+               fail
+             end
   end
 
   stack.pop
