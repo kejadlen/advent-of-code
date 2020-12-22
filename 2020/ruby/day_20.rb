@@ -28,10 +28,7 @@ class Tile
   end
 
   def rotated
-    self.class.new(
-      @id,
-      @raw.map {|row| [row].transpose }.reverse.inject(&:zip).map(&:flatten),
-    )
+    self.class.new(@id, @raw.reverse.transpose)
   end
 
   def flipped
