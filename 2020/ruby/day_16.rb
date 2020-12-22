@@ -50,16 +50,3 @@ p order
   .map(&:first)
   .map {|i| mine[i] }
   .inject(&:*)
-
-# order = rules.to_a.permutation(rules.size)
-#   }.find {|order|
-#     order.map(&:last).each.with_index.all? {|values,i|
-#       nearby.all? {|n|
-#         values.any? {|range| range.cover?(n[i]) }
-#       }
-#     }
-#   }
-
-# p order.map(&:first).zip(mine).select {|o,_|
-#   o.start_with?("departure")
-# }.inject {|a,b| a * b }
