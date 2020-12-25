@@ -1,31 +1,32 @@
-cups = ARGF.read.chars.map(&:to_i)
-cups_range = Range.new(*cups.minmax)
+cups = Hash.new {|h,k|
+  fail if k > 1000000
+  h[k] = k + 1
+}
 
-current = 0
-100.times do
-  current_value = cups.fetch(current % cups.size)
+cup_values = ARGF.read.chars.map(&:to_i)
+current = cup_values.first
 
-  pickup_indices = 3.times.map {|i| (current + i + 1) % cups.size }
-  pickup = cups.values_at(*pickup_indices)
-  pickup_indices.sort.reverse.each do |i|
-    cups.delete_at(i)
-  end
+cup_values = [1_000_000, *cup_values, cup_values.max + 1]
+cup_values.each_cons(2) do |a,b|
+  cups[a] = b
+end
+cups_range = Range.new(*cups.keys.minmax)
 
-  dest_value = current_value - 1
-  until cups_range.cover?(dest_value) && !pickup.include?(dest_value)
+10_000_000.times do |i|
+  pickup = 2.times.inject([cups[current]]) {|p,_| p << cups[p.last] }
+  cups[current] = cups[pickup.last]
+
+  dest_value = current - 1
+  loop do
+    dest_value = cups_range.max if dest_value == 0
+    break unless pickup.include?(dest_value)
     dest_value -= 1
-    dest_value = cups_range.end unless cups_range.cover?(dest_value)
   end
 
+  cups[pickup.last] = cups[dest_value]
+  cups[dest_value] = pickup.first
 
-  dest_index = cups.index(dest_value)
-
-  cups.insert(dest_index+1, *pickup)
-
-  current = cups.index(current_value)
-  current += 1
-  current %= cups.size
+  current = cups[current]
 end
 
-i = cups.index(1)
-p (cups[i+1..-1] + cups[0...i]).join
+p 1.times.inject([cups[1]]) {|p,_| p << cups[p.last] }.inject(&:*)
