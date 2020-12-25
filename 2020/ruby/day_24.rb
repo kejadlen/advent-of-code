@@ -1,3 +1,4 @@
+require "set"
 require "strscan"
 
 def parse(line)
@@ -19,32 +20,36 @@ def parse(line)
   deltas.inject {|(x,y,z),(dx,dy,dz)| [x+dx, y+dy, z+dz] }
 end
 
-tiles = Hash.new(false)
-ARGF.read.split("\n").map {|line| parse(line) }
-  .each do |tile|
-    tiles[tile] = !tiles[tile]
-  end
-
 NEIGHBORS = %w[ e se sw w nw ne ].map {|dir| parse(dir) }
 def tick(tiles)
-  candidates = tiles.keys.flat_map {|coord|
+  coords = Set.new(tiles.flat_map {|coord|
     [
       coord,
       *NEIGHBORS.map {|n| coord.zip(n).map {|c,d| c + d }},
     ]
-  }
-  candidates.map {|coord|
-    live_neighbors = NEIGHBORS.map {|n| coord.zip(n).map {|c,d| c + d }}.count {|c| tiles[c] }
-    if tiles[coord]
-      [coord, (1..2).cover?(live_neighbors)]
+  })
+  Set.new(coords.select {|coord|
+    live_neighbors = NEIGHBORS.map {|n| coord.zip(n).map {|c,d| c + d }}.count {|c| tiles.include?(c) }
+    if tiles.include?(coord)
+      (1..2).cover?(live_neighbors)
     else
-      [coord, live_neighbors == 2]
+      live_neighbors == 2
     end
-  }.to_h.select {|_,v| v }
+  })
 end
 
-100.times do
+tiles = Set.new
+ARGF.read.split("\n").each do |line|
+  tile = parse(line)
+  if tiles.include?(tile)
+    tiles.delete(tile)
+  else
+    tiles << tile
+  end
+end
+
+100.times do |i|
   tiles = tick(tiles)
 end
 
-p tiles.values.count(true)
+p tiles.size
