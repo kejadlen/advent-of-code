@@ -40,12 +40,6 @@ class Tile
   end
 end
 
-Edge = Struct.new(*%i[ key from to rotations is_mirrored ]) do
-  def mirrored?
-    is_mirrored
-  end
-end
-
 tiles = ARGF.read
   .scan(/Tile (\d+):\n((?:[.#]+\n)+)/m)
   .to_h
