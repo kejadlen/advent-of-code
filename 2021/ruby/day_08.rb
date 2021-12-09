@@ -18,24 +18,33 @@ MAP = {
 #     8 6 8 7 4 9 7
 }.transform_keys(&:to_set)
 
+# # My original solution to part two
+# def solve(signals, output)
+#   all = signals + output
+#   one = all.find {|x| x.length == 2 }
+#   four = all.find {|x| x.length == 4 }
+#   seven = all.find {|x| x.length == 3 }
+#   eight = all.find {|x| x.length == 7 }
+
+#   b = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 6 }
+#   e = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 4 }
+#   f = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 9 }
+
+#   a = (seven.chars - one.chars)[0]
+#   c = (one.chars - [f])[0]
+#   d = (four.chars - [b, c, f])[0]
+#   g = (eight.chars - [a, b, c, d, e, f])[0]
+
+#   map = { a: a, b: b, c: c, d: d, e: e, f: f, g: g }.invert
+
+#   output.map {|x| MAP.fetch(x.chars.map {|c| map.fetch(c).to_s }.to_set) }.join.to_i
+# end
+
+# Here it is with a solver, but much, much slower!
 def solve(signals, output)
-  all = signals + output
-  one = all.find {|x| x.length == 2 }
-  four = all.find {|x| x.length == 4 }
-  seven = all.find {|x| x.length == 3 }
-  eight = all.find {|x| x.length == 7 }
-
-  b = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 6 }
-  e = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 4 }
-  f = (?a..?g).find {|x| signals.count {|s| s.include?(x) } == 9 }
-
-  a = (seven.chars - one.chars)[0]
-  c = (one.chars - [f])[0]
-  d = (four.chars - [b, c, f])[0]
-  g = (eight.chars - [a, b, c, d, e, f])[0]
-
-  map = { a: a, b: b, c: c, d: d, e: e, f: f, g: g }.invert
-
+  data = "Patterns = [ #{signals.map { "{ #{_1.upcase.chars.join(" ,")} }" }.join(", ")} ]"
+  solution = `minizinc --cmdline-data "#{data}" day_08.mzn`.scan(/[A-G]/)
+  map = (?a..?g).zip(solution.map(&:downcase)).to_h
   output.map {|x| MAP.fetch(x.chars.map {|c| map.fetch(c).to_s }.to_set) }.join.to_i
 end
 
