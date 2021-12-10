@@ -1,12 +1,5 @@
 input = ARGF.read.split("\n")
 
-class IllegalCharacter < StandardError
-  attr_reader :char
-  def initialize(char)
-    @char = char
-  end
-end
-
 COMPLEMENTS = %w[ () [] {} <> ].map(&:chars).to_h
 OPENING_REGEXP = Regexp.new("[#{Regexp.escape(COMPLEMENTS.keys.join)}]")
 CLOSING_REGEXP = Regexp.new("[#{Regexp.escape(COMPLEMENTS.values.join)}]")
@@ -19,11 +12,11 @@ def parse(line)
     when OPENING_REGEXP
       stack << char
     when CLOSING_REGEXP
-      raise IllegalCharacter.new(char) unless stack.pop == COMPLEMENTS.invert.fetch(char)
+      return { err: char } unless stack.pop == COMPLEMENTS.invert.fetch(char)
     end
   end
 
-  stack
+  { ok: stack }
 end
 
 # points = {
@@ -34,11 +27,10 @@ end
 # }
 
 # p input.sum {|line|
-#   begin
-#     parse(line)
-#     0
-#   rescue IllegalCharacter => e
-#     points.fetch(e.char)
+#   case parse(line)
+#   in { ok: } then 0
+#   in { err: } then points.fetch(err)
+#   else fail
 #   end
 # }
 
@@ -47,7 +39,13 @@ def score(closing) = closing
   .inject(0) {|n,i| n*5 + i }
 
 scores = input
-  .filter_map { parse(_1) rescue nil }
+  .filter_map {|line|
+    case parse(line)
+    in { ok: } then ok
+    in { err: } then nil
+    else fail
+    end
+  }
   .map {|remaining| remaining.reverse.map { COMPLEMENTS.fetch(_1) }}
   .map { score(_1) }
 p scores.sort.fetch(scores.length / 2)
