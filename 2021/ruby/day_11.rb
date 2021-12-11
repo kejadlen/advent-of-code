@@ -15,9 +15,7 @@ neighbors = ->(y, x) {
 # 100.times do
 (1..).each do |i|
   octopuses.transform_values! { _1 + 1 }
-  loop do
-    flashing = octopuses.select { _2 == 10 }
-    break if flashing.empty?
+  until (flashing = octopuses.select { _2 == 10 }).empty?
     flashing.each do |(y,x),_|
       octopuses[[y,x]] += 1
       neighbors.(y,x)
@@ -27,7 +25,10 @@ neighbors = ->(y, x) {
         end
     end
   end
-  puts i or exit if octopuses.values.all? { _1 > 9 }
+  if octopuses.values.all? { _1 > 9 }
+    puts i
+    exit
+  end
   # flashes += octopuses.count { _2 > 9 }
   octopuses.transform_values! { _1 > 10 ? 0 : _1 }
 end
