@@ -14,11 +14,11 @@ loop do
     cave.fetch(path.last)
       # .reject { _1 =~ /^[a-z]+$/ && path.include?(_1) }
       .reject { _1 == "start" }
-      .map { path + [_1] }
-      .reject {|path|
-        small = path.tally.select { _1 =~ /^[a-z]+$/ }
-        (small.count { _2 > 1 } > 1) || small.any? { _2 > 2 }
+      .reject {|cave|
+        smalls = path.tally.select { _1 =~ /^[a-z]+$/ }
+        smalls.fetch(cave, 0) > (smalls.any? { _2 > 1 } ? 0 : 1)
       }
+      .map { path + [_1] }
   }
 end
 
