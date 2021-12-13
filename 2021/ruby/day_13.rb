@@ -4,17 +4,13 @@ dots = dots.scan(/(\d+),(\d+)/).map { _1.map(&:to_i) }
 folds = folds.scan(/(x|y)=(\d+)/).map { [_1, _2.to_i] }
 
 folds.each do |dir, axis|
-  case dir
-  when ?x
-    dots.select {|x,y| x > axis }.each do |dot|
-      dot[0] = axis - (dot[0] - axis)
-    end
-  when ?y
-    dots.select {|x,y| y > axis }.each do |dot|
-      dot[1] = axis - (dot[1] - axis)
-    end
-  else
-    fail
+  index = case dir
+          when ?x then 0
+          when ?y then 1
+          else fail
+          end
+  dots.select { _1[index] > axis }.each do |dot|
+    dot[index] = axis - (dot[index] - axis)
   end
   dots.uniq!
   # p dots.size or exit
