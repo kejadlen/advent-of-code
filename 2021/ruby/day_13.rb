@@ -3,12 +3,9 @@ dots, folds = ARGF.read.split("\n\n")
 dots = dots.scan(/(\d+),(\d+)/).map { _1.map(&:to_i) }
 folds = folds.scan(/(x|y)=(\d+)/).map { [_1, _2.to_i] }
 
+dirs = { ?x => 0, ?y => 1 }
 folds.each do |dir, axis|
-  index = case dir
-          when ?x then 0
-          when ?y then 1
-          else fail
-          end
+  index = dirs.fetch(dir)
   dots.select { _1[index] > axis }.each do |dot|
     dot[index] = axis - (dot[index] - axis)
   end
