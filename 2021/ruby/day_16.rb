@@ -1,68 +1,79 @@
 require "strscan"
 
-def parse(ss)
-  version = ss.scan(/.{3}/).to_i(2)
-  type_id = ss.scan(/.{3}/).to_i(2)
+Packet = Struct.new(:version, :type_id, :content) do
+  include Enumerable
 
-  content = case type_id
-            when 4 # literal value
-              value = ""
-              while group = ss.scan(/1/)
-                value << ss.scan(/.{4}/)
-              end
-              ss.scan(/0/)
-              value << ss.scan(/.{4}/)
-              value.to_i(2)
-            else # operator
-              length_type_id = ss.scan(/./)
-              case length_type_id
-              when ?0
-                sub_packet_length = ss.scan(/.{15}/).to_i(2)
-                sub_packet = ss.scan(/.{#{sub_packet_length}}/)
+  def self.parse(ss)
+    version = ss.scan(/.{3}/).to_i(2)
+    type_id = ss.scan(/.{3}/).to_i(2)
 
-                sss = StringScanner.new(sub_packet)
-                sub_packets = []
-                until sss.eos?
-                  sub_packets << parse(sss)
-                end
-                sub_packets
-              when ?1
-                sub_packet_num = ss.scan(/.{11}/).to_i(2)
-                sub_packet_num.times.map { parse(ss) }
-              else
-                fail
-              end
-            end
+    case type_id
+    when 4 # literal value
+      value = ss.scan(/(1.{4})*(0.{4})/).chars
+        .each_slice(5).flat_map { _1[1..4] }.join
+        .to_i(2)
+      Literal.new(version, type_id, value)
+    else # operator
+      sub_packets = case
+                    when ss.scan(/0(.{15})/)
+                      length = ss.captures[0].to_i(2)
+                      sub_packet = ss.scan(/.{#{length}}/)
 
-  { version: version, type_id: type_id, content: content }
+                      sss = StringScanner.new(sub_packet)
+                      sub_packets = []
+                      until sss.eos?
+                        sub_packets << parse(sss)
+                      end
+                      sub_packets
+                    when ss.scan(/1(.{11})/)
+                      n = ss.captures[0].to_i(2)
+                      n.times.map { parse(ss) }
+                    else
+                      fail
+                    end
+      Operator.new(version, type_id, sub_packets)
+    end
+  end
+
+  def each
+    return enum_for(__method__) unless block_given?
+
+    yield self
+  end
 end
 
-message = ARGF.read.chomp.chars.map { _1.to_i(16).to_s(2).rjust(4, ?0) }.join
-ss = StringScanner.new(message)
-packet = parse(ss)
+class Literal < Packet
+  def value = content
+end
 
-def each(packet, &block)
-  return enum_for(__method__, packet) unless block_given?
+class Operator < Packet
+  def each(&block)
+    super
 
-  block.(packet)
-  if (content = packet.fetch(:content)).is_a?(Array)
     content.each do |sub_packet|
-      each(sub_packet, &block)
+      sub_packet.each(&block)
+    end
+  end
+
+  def value
+    values = content.map(&:value)
+    case type_id
+    when 0 then values.sum
+    when 1 then values.inject(:*)
+    when 2 then values.min
+    when 3 then values.max
+    when 4 then fail
+    when 5 then values.inject(:>) ? 1 : 0
+    when 6 then values.inject(:<) ? 1 : 0
+    when 7 then values.inject(:==) ? 1 : 0
+    else        fail
     end
   end
 end
 
-# p each(packet).sum { _1.fetch(:version) }
+message = ARGF.read.chomp.chars.map { _1.to_i(16).to_s(2).rjust(4, ?0) }.join
+ss = StringScanner.new(message)
+packet = Packet.parse(ss)
 
-value = {
-  0 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.sum },
-  1 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.inject(:*) },
-  2 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.min },
-  3 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.max },
-  4 => ->(c) { c },
-  5 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.inject(:>) ? 1 : 0 },
-  6 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.inject(:<) ? 1 : 0 },
-  7 => ->(c) { c.map { value.fetch(_1.fetch(:type_id)).(_1.fetch(:content)) }.inject(:==) ? 1 : 0 },
-}
-
-p value.fetch(packet.fetch(:type_id)).(packet.fetch(:content))
+p packet.sum(&:version)
+p packet.value
