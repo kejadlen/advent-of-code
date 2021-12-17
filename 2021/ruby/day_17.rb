@@ -1,33 +1,29 @@
-class Probe
-  def initialize(velocity, target)
-    @velocity, @target = velocity, target
-  end
+def fire(v, target)
+  return enum_for(__method__, v, target) unless block_given?
 
-  def each
-    return enum_for(__method__) unless block_given?
+  pos = [0,0]
+  v_x, v_y = v
 
-    pos = [0,0]
-    velocity = @velocity.clone
+  loop do
+    yield pos
 
-    loop do
-      yield pos
+    return if target.zip(pos).all? { _1.cover?(_2) }
 
-      return if @target.zip(pos).all? { _1.cover?(_2) }
+    pos = pos.zip([v_x, v_y]).map { _1.sum }
+    v_x -= 1 if v_x > 0
+    v_y -= 1
 
-      pos = pos.zip(velocity).map { _1.sum }
-      velocity[0] -= 1 if velocity[0] > 0
-      velocity[1] -= 1
-
-      return if pos[0] > @target[0].end
-      return if pos[1] < @target[1].begin
-    end
+    return if pos[0] > target[0].end
+    return if pos[1] < target[1].begin
   end
 end
 
 input = ARGF.read.scan(/x=(.+), y=(.+)/)
 target = input[0].map { eval(_1) }
 
-haystack = (0..256).flat_map {|x| (-256..256).map {|y| [x, y] }}
-haystack.select! {|v| Probe.new(v, target).each.any? {|pos| target.zip(pos).all? { _1.cover?(_2) }}}
-# p haystack.map {|v| Probe.new(v, target).each.map { _2 }.max }.max
+xs = (0..target[0].end).select { (1.._1).sum > target[0].begin }
+haystack = xs.flat_map {|x| (-256..256).map {|y| [x, y] }}
+haystack.select! {|v| fire(v, target).each.any? {|pos| target.zip(pos).all? { _1.cover?(_2) }}}
+
+# p haystack.map {|v| fire(v, target).each.map { _2 }.max }.max
 p haystack.count
