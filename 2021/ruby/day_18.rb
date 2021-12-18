@@ -62,15 +62,11 @@ def explode(s, pair_range)
 end
 
 class Array
-  def magnitude
-    3*self[0].magnitude + 2*self[1].magnitude
-  end
+  def magnitude = 3*self[0].magnitude + 2*self[1].magnitude
 end
 
 class Integer
-  def magnitude
-    self
-  end
+  def magnitude = self
 end
 
 # sum = ARGF.read.split("\n").reject(&:empty?).inject {|sum,num| add(sum, num) }
