@@ -5,5 +5,5 @@ authors = ["Alpha Chen <alpha.chen@gmail.com>"]
 
 [dependencies]
 error-chain = "0.7"
-regex = "0.1"
+regex = "1.5"
 rust-crypto = "0.2"
