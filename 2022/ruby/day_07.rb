@@ -1,21 +1,19 @@
-input = ARGF.read.lines(chomp: true).slice_when { _2.start_with?(?$) }
+input = ARGF.read.lines(chomp: true)
 
 Dir = Struct.new(:parent, :name, :children) do
-  include Enumerable
-
   def size = children.sum(&:size)
 
-  def each(&block)
-    return enum_for(__method__, &block) unless block
+  def each
+    return enum_for(__method__) unless block_given?
 
-    block.(self)
+    yield self
 
     children.each do |child|
       case child
       when Dir
-        child.each(&block)
+        child.each { yield _1 }
       when File
-        block.(child)
+        yield child
       else
         fail child.inspect
       end
@@ -28,9 +26,8 @@ File = Struct.new(:parent, :name, :size)
 root = Dir.new(nil, ?/, [])
 pwd = root
 
-input.each do |chunk|
-  cmd, *out = *chunk
-  case cmd
+input.each do |line|
+  case line
   when /\$ cd \//
     # no-op
   when /\$ cd \.\./
@@ -38,18 +35,13 @@ input.each do |chunk|
   when /\$ cd (.+)/
     pwd = pwd.children.find { _1.name == $1 }
   when /\$ ls/
-    out.each do |line|
-      case line
-      when /(\d+) (.+)/
-        pwd.children << File.new(pwd, $2, $1.to_i)
-      when /dir (.+)/
-        pwd.children << Dir.new(pwd, $1, [])
-      else
-        fail line
-      end
-    end
+    # no-op
+  when /dir (.+)/
+    pwd.children << Dir.new(pwd, $1, [])
+  when /(\d+) (.+)/
+    pwd.children << File.new(pwd, $2, $1.to_i)
   else
-    fail chunk.inspect
+    fail line
   end
 end
 
