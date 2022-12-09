@@ -19,15 +19,15 @@ class Snake
             end
     @knots[0] = @knots[0].zip(delta).map { _1 + _2 }
 
-    (0...@knots.size-1).each do |i|
-      head = @knots[i]
-      tail = @knots[i+1]
-
+    @knots = @knots[1..].inject([@knots[0]]) {|knots, tail|
+      head = knots.last
       delta = head.zip(tail).map { _1 - _2 }
-      if delta.any? { _1.abs > 1 }
-        @knots[i+1] = tail.zip(delta.map { _1.clamp(-1, 1) }).map { _1 + _2 }
-      end
-    end
+      knots << if delta.any? { _1.abs > 1 }
+                 tail.zip(delta.map { _1.clamp(-1, 1) }).map { _1 + _2 }
+               else
+                 tail
+               end
+    }
   end
 end
 
