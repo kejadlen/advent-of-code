@@ -1,16 +1,28 @@
-Monkey = Struct.new(:id, :items, :operation, :test, :throw_to)
+Monkey = Struct.new(:id, :items, :operation, :test, :t, :f) do
+  def throw_to(item)
+    (item % test).zero? ? t : f
+  end
+end
 
-monkeys = ARGF.read.split("\n\n").map {|raw|
-  raw = raw.lines(chomp: true)
-  id = raw.shift.match(/\d+/)[0].to_i
-  starting_items = raw.shift.match(/: (.+)/)[1].split(", ").map(&:to_i)
-  operation_ = raw.shift.match(/: new = (.+)/)[1]
-  operation = ->(old) { eval(operation_) }
-  test = raw.shift.match(/\d+/)[0].to_i
-  t = raw.shift.match(/\d+/)[0].to_i
-  f = raw.shift.match(/\d+/)[0].to_i
-  throw_to = ->(n) { (n % test).zero? ? t : f }
-  Monkey.new(id, starting_items, operation, test, throw_to)
+MONKEY_RE = /Monkey (?<id>\d+):
+  Starting items: (?<items>(?~\n))
+  Operation: new = (?<op>(?~\n))
+  Test: divisible by (?<test>\d+)
+    If true: throw to monkey (?<t>\d+)
+    If false: throw to monkey (?<f>\d+)/m
+
+monkeys = ARGF.read.split("\n\n").map {|monkey|
+  md = MONKEY_RE.match(monkey)
+  fail if md.nil?
+
+  Monkey.new(
+    md[:id].to_i,
+    md[:items].split(", ").map(&:to_i),
+    md[:op],
+    md[:test].to_i,
+    md[:t].to_i,
+    md[:f].to_i,
+  )
 }
 
 max_worry = monkeys.map(&:test).inject(:*)
@@ -23,10 +35,11 @@ inspections = Hash.new(0)
       inspections[monkey.id] += 1
 
       item = monkey.items.shift
-      item = monkey.operation.(item)
+      old = item
+      item = eval(monkey.operation)
       # item /= 3
       item %= max_worry
-      to = monkey.throw_to.(item)
+      to = monkey.throw_to(item)
       monkeys[to].items << item
     end
   end
