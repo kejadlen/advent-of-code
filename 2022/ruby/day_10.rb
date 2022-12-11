@@ -1,25 +1,42 @@
 instructions = ARGF.read.lines(chomp: true)
 
-adds = {}
-cycle = 1
-instructions.each do |instruction|
-  cycle += case instruction
-           when /noop/
-             1
-           when /addx (-?\d+)/
-             adds[cycle+1] = $1.to_i
-             2
-           else fail instruction
-           end
+def exec(instructions)
+  return enum_for(__method__, instructions) unless block_given?
+
+  x = 1
+  instructions.each do |instruction|
+    case instruction
+    when /noop/
+      yield x
+    when /addx (-?\d+)/
+      yield x
+      yield x
+      x += $1.to_i
+    else
+      fail "invalid instruction: #{instruction}"
+    end
+  end
+  yield x
 end
 
-xs = (0..adds.keys.max).inject([1]) { _1 << _1.last + adds.fetch(_2, 0) }
-p 20.step(by: 40, to: 220).map { [_1, xs[_1]] }.sum { _1 * _2 }
+x_hist = exec(instructions).to_a
 
-puts 6.times.map {|y|
-  40.times.map {|x|
-    cycle = 40*y + x + 1
-    xx = xs.fetch(cycle, xs.last)
-    (-1..1).cover?(x - xx) ? ?# : ?.
+# part one
+p 20.step(by: 40, to: 220).sum { x_hist[_1-1] * _1 }
+
+# part two
+puts x_hist.each_slice(40).map {|row|
+  row.each.with_index.map {|x, cycle|
+    (-1..1).cover?(cycle - x) ? ?# : ?.
   }.join
 }.join("\n")
+
+# a functional version of part two, but I think
+# the imperative version feels closer to the domain
+#
+# x_hist.each_slice(40) do |row|
+#   row.each.with_index do |x, cycle|
+#     putc (-1..1).cover?(cycle - x) ? ?# : ?.
+#   end
+#   puts
+# end
