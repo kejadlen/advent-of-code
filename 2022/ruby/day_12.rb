@@ -1,69 +1,50 @@
-height_map = ARGF.read.lines(chomp: true).map(&:chars)
+heights = ARGF.read.lines(chomp: true).map(&:chars)
   .each.with_index.with_object({}) do |(row,y),map|
     row.each.with_index do |height,x|
       map[[y,x]] = height
     end
   end
 
-s, e = height_map.invert.values_at(?S, ?E)
-height_map[s] = ?a
-height_map[e] = ?z
-
-# part one
-# queue = [s]
-# visited = { s => 0 }
-
-# until visited.has_key?(e)
-#   current = queue.shift
-#   moves = visited.fetch(current)
-
-#   neighbors = [
-#     [-1,  0],
-#     [ 1,  0],
-#     [ 0, -1],
-#     [ 0,  1],
-#   ].map { current.zip(_1).map {|a,b| a + b } }
-#     .select { height_map.has_key?(_1) }
-#     .reject { visited.has_key?(_1) }
-#     .select { height_map.fetch(_1).ord - 1 <= height_map.fetch(current).ord }
-
-#   neighbors.each do |y,x|
-#     visited[[y,x]] = moves + 1
-#     queue << [y,x]
-#   end
-
-#   queue.sort_by { visited.fetch(_1) }
-# end
-
-# p visited.fetch(e)
-
-# part two
-queue = [e]
-visited = { e => 0 }
-
-loop do
-  current = queue.shift
-  moves = visited.fetch(current)
-
-  neighbors = [
-    [-1,  0],
-    [ 1,  0],
-    [ 0, -1],
-    [ 0,  1],
-  ].map { current.zip(_1).map {|a,b| a + b } }
-    .select { height_map.has_key?(_1) }
-    .reject { visited.has_key?(_1) }
-    .select { height_map.fetch(current).ord <= height_map.fetch(_1).ord + 1 }
-
-  if a = neighbors.find { height_map.fetch(_1) == ?a }
-    p moves + 1
-    break
+class HeightMap
+  def initialize(heights)
+    @heights = heights
   end
 
-  neighbors.each do |y,x|
-    visited[[y,x]] = moves + 1
-    queue << [y,x]
-  end
+  def shortest(from:, to:)
+    queue = [from]
+    visited = { from => 0 }
 
-  queue.sort_by { visited.fetch(_1) }
+    until queue.empty? || visited.has_key?(to)
+      current = queue.shift
+      moves = visited.fetch(current)
+
+      neighbors = [
+        [-1,  0],
+        [ 1,  0],
+        [ 0, -1],
+        [ 0,  1],
+      ].map { current.zip(_1).map {|a,b| a + b } }
+        .select { @heights.has_key?(_1) }
+        .reject { visited.has_key?(_1) }
+        .select { @heights.fetch(_1).ord - 1 <= @heights.fetch(current).ord }
+
+      neighbors.each do |y,x|
+        visited[[y,x]] = moves + 1
+        queue << [y,x]
+      end
+
+      queue.sort_by { visited.fetch(_1) }
+    end
+
+    visited.fetch(to, nil)
+  end
 end
+
+s, e = heights.invert.values_at(?S, ?E)
+heights[s] = ?a
+heights[e] = ?z
+
+hm = HeightMap.new(heights)
+p hm.shortest(from: s, to: e)
+
+p heights.select { _2 == ?a }.map(&:first).map { hm.shortest(from: _1, to: e) }.compact.min
