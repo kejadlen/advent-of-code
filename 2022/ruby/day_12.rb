@@ -10,11 +10,11 @@ class HeightMap
     @heights = heights
   end
 
-  def shortest(from:, to:)
+  def shortest(from:, to:, &cond)
     queue = [from]
     visited = { from => 0 }
 
-    until queue.empty? || visited.has_key?(to)
+    until queue.empty? || to.any? { visited.has_key?(_1) }
       current = queue.shift
       moves = visited.fetch(current)
 
@@ -26,7 +26,7 @@ class HeightMap
       ].map { current.zip(_1).map {|a,b| a + b } }
         .select { @heights.has_key?(_1) }
         .reject { visited.has_key?(_1) }
-        .select { @heights.fetch(_1).ord - 1 <= @heights.fetch(current).ord }
+        .select { cond.([@heights.fetch(current), @heights.fetch(_1)]) }
 
       neighbors.each do |y,x|
         visited[[y,x]] = moves + 1
@@ -36,7 +36,7 @@ class HeightMap
       queue.sort_by { visited.fetch(_1) }
     end
 
-    visited.fetch(to, nil)
+    visited.find {|k,v| to.include?(k) }.last
   end
 end
 
@@ -45,6 +45,7 @@ heights[s] = ?a
 heights[e] = ?z
 
 hm = HeightMap.new(heights)
-p hm.shortest(from: s, to: e)
+p hm.shortest(from: s, to: [e]) { _1.ord + 1 >= _2.ord }
 
-p heights.select { _2 == ?a }.map(&:first).map { hm.shortest(from: _1, to: e) }.compact.min
+as = heights.select { _2 == ?a }.map(&:first)
+p hm.shortest(from: e, to: as) { _1.ord - 1 <= _2.ord }
