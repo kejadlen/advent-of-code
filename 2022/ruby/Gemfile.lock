@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    minitest (5.16.3)
+    parslet (2.0.0)
+
+PLATFORMS
+  arm64-darwin-21
+
+DEPENDENCIES
+  minitest
+  parslet
+
+BUNDLED WITH
+   2.3.18
