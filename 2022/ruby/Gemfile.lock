@@ -1,8 +1,20 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    ffi (1.15.5)
+    language_server-protocol (3.17.0.2)
     minitest (5.16.3)
     parslet (2.0.0)
+    prettier_print (1.2.0)
+    ruby-lsp (0.3.7)
+      language_server-protocol (~> 3.17.0)
+      sorbet-runtime
+      syntax_tree (>= 4.0.2, < 5.0.0)
+    sorbet-runtime (0.5.10597)
+    syntax_tree (4.3.0)
+      prettier_print (>= 1.0.2)
+    z3 (0.0.20221020)
+      ffi (~> 1.9)
 
 PLATFORMS
   arm64-darwin-21
@@ -10,6 +22,8 @@ PLATFORMS
 DEPENDENCIES
   minitest
   parslet
+  ruby-lsp
+  z3
 
 BUNDLED WITH
    2.3.18
