@@ -13,6 +13,27 @@ monkeys = ARGF.read.lines(chomp: true).to_h {|line| line.split(": ") }
 sub_monkeys = monkeys.delete("root").split(" + ")
 monkeys.delete("humn")
 
+require "z3"
+
+solver = Z3::Solver.new
+solver.assert Z3.Int(sub_monkeys[0]) == Z3.Int(sub_monkeys[1])
+
+monkeys.each do |name, job|
+  a, op, b = job.split(" ")
+  if op.nil?
+    solver.assert Z3.Int(name) == a.to_i
+  else
+    a = a =~ /^\d+$/ ? a.to_i : Z3.Int(a)
+    b = b =~ /^\d+$/ ? b.to_i : Z3.Int(b)
+    solver.assert Z3.Int(name) == a.send(op, b)
+  end
+end
+
+fail unless solver.satisfiable?
+p solver.model[Z3.Int("humn")]
+exit
+
+# original part two
 monkeys.each do |name, body|
   define_method(name) do
     eval(body)
@@ -53,8 +74,7 @@ def reverse(target, tree)
     case tree
     in :humn
       return target
-    in [op, Integer, b]
-      a = tree.fetch(1)
+    in [op, Integer => a, b]
       case op
       when ?* then target /= a
       when ?+ then target -= a
@@ -62,8 +82,7 @@ def reverse(target, tree)
       else         fail tree.inspect
       end
       tree = b
-    in [op, a, Integer]
-      b = tree.fetch(2)
+    in [op, a, Integer => b]
       case op
       when ?- then target += b
       when ?/ then target *= b
