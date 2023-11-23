@@ -1,0 +1,3 @@
+[submodule "2022/bqn/lib"]
+	path = 2022/bqn/lib
+	url = https://github.com/mlochbaum/bqn-libs.git
