@@ -1,3 +1,5 @@
+CurrentNumber = Data.define(:coords, :acc)
+
 cur_num = nil
 nums = {}
 syms = {}
@@ -6,13 +8,14 @@ ARGF.readlines(chomp: true).each.with_index do |row, y|
     case c
     when /\d/
       if cur_num
-        cur_num << c
+        cur_num.coords << [y,x]
+        cur_num.acc << c
       else
-        cur_num = c
+        cur_num = CurrentNumber.new([[y,x]], c)
       end
     else
       if cur_num
-        nums[[y,x-cur_num.length]] = cur_num.to_i
+        nums.merge!(cur_num.coords.to_h { [_1, cur_num.acc.to_i] })
         cur_num = nil
       end
 
@@ -23,21 +26,37 @@ ARGF.readlines(chomp: true).each.with_index do |row, y|
   end
 
   if cur_num
-    nums[[y, row.length-cur_num.length]] = cur_num.to_i
+    nums.merge!(cur_num.coords.to_h { [_1, cur_num.acc.to_i] })
     cur_num = nil
   end
 end
 
-p nums
-  .filter_map {|(y,x), num|
+# part one
+p syms
+  .flat_map {|(y,x), _|
     dy = (-1..1).to_a
-    dx = (-1..num.digits.length).to_a
-    if dy.product(dx)
-        .map {|dy,dx| [y+dy,x+dx] }
-        .any? { syms.has_key?(_1) }
-      num
+    dx = (-1..1).to_a
+    dy.product(dx)
+      .map {|dy,dx| [y+dy,x+dx] }
+      .filter_map { nums.fetch(_1, nil) }
+      .uniq # lol, hack
+  }
+  .sum
+
+p syms
+  .select { _2 == ?* }
+  .filter_map {|(y,x), _|
+    dy = (-1..1).to_a
+    dx = (-1..1).to_a
+    parts = dy.product(dx)
+      .map {|dy,dx| [y+dy,x+dx] }
+      .filter_map { nums.fetch(_1, nil) }
+      .uniq # lol, hack
+
+    if parts.length == 2
+      parts
     else
       nil
     end
   }
-  .sum
+  .sum { _1.inject(:*) }
