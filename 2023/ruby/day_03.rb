@@ -1,3 +1,8 @@
+Part = Data.define(:number) do
+  def eql?(other)
+    self.object_id == other.object_id
+  end
+end
 CurrentNumber = Data.define(:coords, :acc)
 
 cur_num = nil
@@ -15,7 +20,8 @@ ARGF.readlines(chomp: true).each.with_index do |row, y|
       end
     else
       if cur_num
-        nums.merge!(cur_num.coords.to_h { [_1, cur_num.acc.to_i] })
+        part = Part.new(cur_num.acc.to_i)
+        nums.merge!(cur_num.coords.to_h { [_1, part] })
         cur_num = nil
       end
 
@@ -26,7 +32,8 @@ ARGF.readlines(chomp: true).each.with_index do |row, y|
   end
 
   if cur_num
-    nums.merge!(cur_num.coords.to_h { [_1, cur_num.acc.to_i] })
+    part = Part.new(cur_num.acc.to_i)
+    nums.merge!(cur_num.coords.to_h { [_1, part] })
     cur_num = nil
   end
 end
@@ -39,9 +46,9 @@ p syms
     dy.product(dx)
       .map {|dy,dx| [y+dy,x+dx] }
       .filter_map { nums.fetch(_1, nil) }
-      .uniq # lol, hack
+      .uniq
   }
-  .sum
+  .sum(&:number)
 
 p syms
   .select { _2 == ?* }
@@ -51,7 +58,7 @@ p syms
     parts = dy.product(dx)
       .map {|dy,dx| [y+dy,x+dx] }
       .filter_map { nums.fetch(_1, nil) }
-      .uniq # lol, hack
+      .uniq
 
     if parts.length == 2
       parts
@@ -59,4 +66,4 @@ p syms
       nil
     end
   }
-  .sum { _1.inject(:*) }
+  .sum { _1.map(&:number).inject(:*) }
