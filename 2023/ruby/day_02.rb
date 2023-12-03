@@ -1,13 +1,13 @@
 input = ARGF.read
 
-def cubes(input)
+def parse_cubes(input)
   input
     .scan(/(\d+) (\w+)/)
     .to_h(&:reverse)
     .transform_values(&:to_i)
 end
 
-bag = cubes("12 red cubes, 13 green cubes, and 14 blue cubes")
+bag = parse_cubes("12 red cubes, 13 green cubes, and 14 blue cubes")
 
 Game = Data.define(:id, :reveals) do
   def possible?(bag)
@@ -22,7 +22,7 @@ games = input
   .map {|id, reveals|
     Game.new(
       id.to_i,
-      reveals.split(?;).map { cubes(_1) }
+      reveals.split(?;).map { parse_cubes(_1) }
     )
   }
 
