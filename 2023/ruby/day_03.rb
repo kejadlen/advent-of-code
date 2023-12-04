@@ -1,69 +1,55 @@
+require "strscan"
+
 Part = Data.define(:number) do
   def eql?(other)
     self.object_id == other.object_id
   end
 end
-CurrentNumber = Data.define(:coords, :acc)
 
-cur_num = nil
-nums = {}
-syms = {}
-ARGF.readlines(chomp: true).each.with_index do |row, y|
-  row.chars.each.with_index do |c, x|
-    case c
-    when /\d/
-      if cur_num
-        cur_num.coords << [y,x]
-        cur_num.acc << c
+def parse(input)
+  ss = StringScanner.new(input)
+  y = x = 0
+  schematic = {}
+  until ss.eos?
+    case
+      when ss.scan(/\./)
+        x += 1
+      when num = ss.scan(/\d+/)
+        coords = (0...num.length).map {|dx| [y, x+dx] }
+        part = Part.new(num.to_i)
+        schematic.merge!(coords.to_h { [_1, part] })
+        x += num.length
+      when ss.scan(/\n/)
+        y += 1
+        x = 0
+      when sym = ss.scan(/./)
+        schematic[[y,x]] = sym
+        x += 1
       else
-        cur_num = CurrentNumber.new([[y,x]], c)
-      end
-    else
-      if cur_num
-        part = Part.new(cur_num.acc.to_i)
-        nums.merge!(cur_num.coords.to_h { [_1, part] })
-        cur_num = nil
-      end
-
-      if c != ?.
-        syms[[y,x]] = c
-      end
+        fail
     end
   end
-
-  if cur_num
-    part = Part.new(cur_num.acc.to_i)
-    nums.merge!(cur_num.coords.to_h { [_1, part] })
-    cur_num = nil
-  end
+  schematic
 end
 
-# part one
-p syms
-  .flat_map {|(y,x), _|
-    dy = (-1..1).to_a
-    dx = (-1..1).to_a
-    dy.product(dx)
-      .map {|dy,dx| [y+dy,x+dx] }
-      .filter_map { nums.fetch(_1, nil) }
-      .uniq
-  }
-  .sum(&:number)
+schematic = parse(ARGF.read)
+syms, nums = schematic.partition { String === _2 }.map(&:to_h)
+neighboring_parts = ->((y,x)) {
+  dy = (-1..1).to_a
+  dx = (-1..1).to_a
+  dy.product(dx)
+    .map {|dy,dx| [y+dy,x+dx] }
+    .filter_map { nums.fetch(_1, nil) }
+}
 
+# part one
+p syms.keys.flat_map { neighboring_parts.(_1) }.uniq.sum(&:number)
+
+# part two
 p syms
   .select { _2 == ?* }
-  .filter_map {|(y,x), _|
-    dy = (-1..1).to_a
-    dx = (-1..1).to_a
-    parts = dy.product(dx)
-      .map {|dy,dx| [y+dy,x+dx] }
-      .filter_map { nums.fetch(_1, nil) }
-      .uniq
-
-    if parts.length == 2
-      parts
-    else
-      nil
-    end
+  .filter_map {|coord, _|
+    parts = neighboring_parts.(coord).uniq
+    parts.length == 2 ? parts : nil
   }
   .sum { _1.map(&:number).inject(:*) }
