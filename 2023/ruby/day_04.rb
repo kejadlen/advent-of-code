@@ -17,9 +17,6 @@ wins = Hash.new {|h,k|
   winners = winning & card
   new_cards = (1..winners.length).map { k + _1 }
 
-  h[k] = winners.empty? ? 1 : 1 + new_cards.sum { h[_1] }
+  h[k] = 1 + (winners.empty? ? 0 : new_cards.sum { h[_1] })
 }
-p cards.map {|id,(winning,card)|
-    wins[id]
-  }
-  .sum
+p cards.keys.sum { wins[_1] }
