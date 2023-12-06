@@ -84,23 +84,6 @@ p dests.map(&:begin).min
 # seeds = seeds
 #   .each_slice(2)
 #   .map {|start, length| (start...start+length) }
-# reversed = mappings
-#   .map {|mapping|
-#     Mapping.new(
-#       mapping.conversions.map {|c|
-#         Conversion.new((c.dest_start...c.dest_start+c.source_range.size), c.source_range.begin)
-#       }
-#     )
-#   }
-#   .reverse
-# p (0..).find {|i|
-#     source = reversed.inject(i) {|cur, mapping| mapping[cur] }
-#     seeds.any? { _1.cover?(source) }
-#   }
-
-# seeds = seeds
-#   .each_slice(2)
-#   .map {|start, length| (start...start+length) }
 reversed = mappings
   .map {|mapping|
     Mapping.new(
@@ -110,6 +93,14 @@ reversed = mappings
     )
   }
   .reverse
+# p (0..).find {|i|
+#     source = reversed.inject(i) {|cur, mapping| mapping[cur] }
+#     seeds.any? { _1.cover?(source) }
+#   }
+
+# seeds = seeds
+#   .each_slice(2)
+#   .map {|start, length| (start...start+length) }
 lowest = seeds
   .flat_map(&:minmax)
   .filter_map {|seed|
